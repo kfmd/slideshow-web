@@ -1,57 +1,27 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: rsu_postgres
-    environment:
-      POSTGRES_USER: ${DB_USER:-rsu_admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-SecurePassword123!}
-      POSTGRES_DB: ${DB_NAME:-rsu_slideshow}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  slideshow-app:
+    build: .
+    container_name: rsu-islam-slideshow
     ports:
-      - "5432:5432"
-    networks:
-      - rsu_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-rsu_admin}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build: ./backend
-    container_name: rsu_backend
-    command: npm start
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: ${DB_USER:-rsu_admin}
-      DB_PASSWORD: ${DB_PASSWORD:-SecurePassword123!}
-      DB_NAME: ${DB_NAME:-rsu_slideshow}
-      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
-      PORT: 8080
-      NODE_ENV: ${NODE_ENV:-development}
+      - "3000:3000"
     volumes:
-      - ./backend/src:/usr/src/app/src
-      - ./frontend/public:/usr/src/app/frontend/public
-      - uploads_data:/usr/src/app/frontend/public/assets
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - rsu_network
+      - ./uploads:/usr/src/app/uploads
+      - ./database:/usr/src/app/database
+      - ./public:/usr/src/app/public
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SESSION_SECRET=rsu-islam-secure-secret-change-this
     restart: unless-stopped
-
-volumes:
-  postgres_data:
-    driver: local
-  uploads_data:
-    driver: local
+    networks:
+      - slideshow-network
 
 networks:
-  rsu_network:
+  slideshow-network:
     driver: bridge
+
+volumes:
+  uploads:
+  database:

@@ -1,0 +1,287 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Admin Panel - RSU Islam Slideshow</title> <link rel="stylesheet" href="/styles.css"> <link rel="stylesheet" href="/admin.css"> </head> <body> <div class="admin-container"> <!-- Sidebar --> <aside class="sidebar"> <div class="sidebar-header"> <a href="/admin" class="sidebar-logo">🏥 RSU Islam</a> </div>
+
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="slideshows">
+                <span class="nav-icon">🖼️</span>
+                <span>Slideshows</span>
+            </a>
+            <a href="#" class="nav-item" data-view="users" data-admin-only>
+                <span class="nav-icon">👥</span>
+                <span>Users</span>
+            </a>
+            <a href="#" class="nav-item" data-view="settings" data-admin-only>
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+            <h1 class="header-title">Dashboard</h1>
+            
+            <div class="header-actions">
+                <div class="notification-badge" data-count="0">
+                    <span style="font-size: 1.5rem; cursor: pointer;">🔔</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <span id="username">Admin</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Dashboard View -->
+            <div data-view="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSlideshows">0</div>
+                        <div class="stat-label">Total Slideshows</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="activeSlideshows">0</div>
+                        <div class="stat-label">Active Slideshows</div>
+                    </div>
+                    <div class="stat-card secondary">
+                        <div class="stat-value" id="totalDisplays">0</div>
+                        <div class="stat-label">Total Displays</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="totalSlides">0</div>
+                        <div class="stat-label">Total Slides</div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">Quick Actions</div>
+                    <div class="card-body">
+                        <div class="flex gap-2">
+                            <button class="btn btn-primary" onclick="openCreateSlideshowModal()">
+                                ➕ Create Slideshow
+                            </button>
+                            <button class="btn btn-outline" onclick="window.open('/slideshow', '_blank')">
+                                ▶️ View Live Slideshow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slideshows View -->
+            <div data-view="slideshows" style="display: none;">
+                <div class="content-actions">
+                    <button class="btn btn-primary" id="createSlideshowBtn">
+                        ➕ Create New Slideshow
+                    </button>
+                </div>
+                
+                <div class="slideshow-grid" id="slideshowsGrid"></div>
+            </div>
+
+            <!-- Users View -->
+            <div data-view="users" style="display: none;" data-admin-only>
+                <div class="content-actions">
+                    <button class="btn btn-primary" onclick="openAddUserModal()">
+                        ➕ Add User
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div data-view="settings" style="display: none;" data-admin-only>
+                <form id="settingsForm" onsubmit="saveSettings(event)">
+                    <div class="settings-section">
+                        <h3>Font Settings</h3>
+                        <div class="settings-grid">
+                            <div class="form-group">
+                                <label class="form-label">Font Family</label>
+                                <select id="fontFamily" class="form-control">
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="Helvetica, sans-serif">Helvetica</option>
+                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="Verdana, sans-serif">Verdana</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Title Font Size (px)</label>
+                                <input type="number" id="titleFontSize" class="form-control" min="24" max="72" value="48">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description Font Size (px)</label>
+                                <input type="number" id="descriptionFontSize" class="form-control" min="14" max="48" value="24">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Slideshow Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Transition Duration (ms)</label>
+                            <input type="number" id="transitionDuration" class="form-control" min="1000" max="30000" step="1000" value="5000">
+                            <small class="form-hint">Time each slide displays (1000ms = 1 second)</small>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Company Logo</h3>
+                        <div class="form-group">
+                            <label class="form-label">Upload Logo</label>
+                            <input type="file" class="form-control" accept="image/*" onchange="uploadLogo(event)">
+                            <img id="currentLogo" style="max-width: 200px; margin-top: 1rem; display: none;">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Create/Edit Slideshow Modal -->
+<div id="slideshowModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="slideshowModalTitle">Create New Slideshow</h2>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="slideshowForm" onsubmit="saveSlideshow(event)">
+            <div class="modal-body">
+                <input type="hidden" id="slideshowId">
+                <div class="form-group">
+                    <label class="form-label">Title *</label>
+                    <input type="text" id="slideshowTitle" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="slideshowDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="slideshowStatus" class="form-control">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Slide Management Modal -->
+<div id="slideManagementModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2 class="modal-title" id="slideManagementTitle">Manage Slides</h2>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <button class="btn btn-primary" onclick="openAddSlidesModal()">➕ Add Slides</button>
+            </div>
+            <div id="slidesList" class="slide-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Slides Modal -->
+<div id="addSlidesModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Add Slides</h2>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="addSlidesForm" onsubmit="uploadSlides(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Select Images *</label>
+                    <input type="file" id="slideImages" class="form-control" accept="image/*" multiple required>
+                    <small class="form-hint">Select one or more images (JPG, PNG, GIF, WebP)</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="slideTitle" class="form-control" placeholder="Slide title (same for all)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="slideDescription" class="form-control" rows="3" placeholder="Slide description (same for all)"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload Slides</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Add New User</h2>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="addUserForm" onsubmit="createUser(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Username *</label>
+                    <input type="text" id="newUsername" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password *</label>
+                    <input type="password" id="newPassword" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role *</label>
+                    <select id="newUserRole" class="form-control" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/admin.js"></script>
+
+</body> </html>
+

@@ -1,0 +1,20 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>RSU Islam Group Slideshow</title> <link rel="stylesheet" href="/slideshow.css"> </head> <body class="slideshow-body"> <!-- Company Logo --> <img id="companyLogo" class="company-logo" style="display: none;" alt="Company Logo">
+
+
+<!-- Slideshow Container -->
+<div id="slideshowContainer" class="slideshow-container"></div>
+
+<!-- Controls -->
+<div class="fullscreen-controls">
+    <button class="control-btn" id="playPauseBtn">⏸️ Pause</button>
+    <button class="control-btn" id="prevBtn">⬅️ Previous</button>
+    <button class="control-btn" id="nextBtn">Next ➡️</button>
+    <button class="control-btn" id="fullscreenBtn">⛶ Fullscreen</button>
+</div>
+
+<!-- Pagination -->
+<div id="pagination" class="pagination"></div>
+
+<script src="/slideshow.js"></script>
+
+</body> </html>
