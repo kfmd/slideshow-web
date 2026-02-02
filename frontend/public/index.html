@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSU Islam Group Slideshow</title>
+  <link rel="stylesheet" href="/css/slideshow.css">
+</head>
+<body>
+  <!-- Slideshow Container -->
+  <div id="slideshow-root" class="slideshow-root">
+    <!-- Slide Display -->
+    <div class="slide-container">
+      <img id="slide-image" 
+           class="slide-image" 
+           src="/assets/placeholder.png" 
+           alt="Hospital Service" />
+      
+      <!-- Text Overlay -->
+      <div class="slide-overlay">
+        <div class="slide-caption">
+          <h1 id="slide-title"></h1>
+          <p id="slide-description"></p>
+        </div>
+      </div>
+
+      <!-- Company Logo (if enabled) -->
+      <div id="company-logo" class="company-logo" style="display: none;">
+        <img id="logo-img" src="/assets/logo-sample.png" alt="RSU Islam">
+      </div>
+
+      <!-- Pagination Dots -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <script src="/js/slideshow.js"></script>
+</body>
+</html>
