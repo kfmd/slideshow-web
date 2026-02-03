@@ -1,27 +1,25 @@
 version: '3.8'
 
 services:
-  slideshow-app:
+  rsu-slideshow:
     build: .
-    container_name: rsu-islam-slideshow
+    container_name: rsu-slideshow-app
     ports:
       - "3000:3000"
     volumes:
-      - ./uploads:/usr/src/app/uploads
-      - ./database:/usr/src/app/database
-      - ./public:/usr/src/app/public
+      - ./database:/app/database
+      - ./assets/images/uploads:/app/assets/images/uploads
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - SESSION_SECRET=rsu-islam-secure-secret-change-this
     restart: unless-stopped
     networks:
-      - slideshow-network
+      - rsu-network
 
 networks:
-  slideshow-network:
+  rsu-network:
     driver: bridge
 
 volumes:
-  uploads:
   database:
+  uploads:

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSU Islam Group - Slideshow Display</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fullscreen Slideshow Container -->
+    <div id="slideshowContainer" class="slideshow-container active">
+        <div id="slidesWrapper"></div>
+    </div>
+
+    <script>
+        // Standalone Slideshow Player
+        const slideshowPlayer = {
+            currentSlideIndex: 0,
+            slideshowInterval: null,
+            slides: [],
+
+            init() {
+                this.loadSlides();
+                this.startAutoPlay();
+                
+                // Auto-refresh every 5 minutes to get new content
+                setInterval(() => {
+                    this.loadSlides();
+                }, 300000);
+            },
+
+            loadSlides() {
+                // Load from localStorage (temporary, will be replaced with API call)
+                const storedSlideshows = localStorage.getItem('rsu_slideshows');
+                
+                if (storedSlideshows) {
+                    const slideshows = JSON.parse(storedSlideshows);
+                    this.slides = slideshows
+                        .filter(s => s.status === 'active')
+                        .flatMap(s => s.images.map(img => ({ 
+                            ...img, 
+                            slideshowTitle: s.title, 
+                            slideshowId: s.id 
+                        })));
+                    
+                    this.renderSlides();
+                }
+            },
+
+            renderSlides() {
+                const wrapper = document.getElementById('slidesWrapper');
+                
+                if (this.slides.length === 0) {
+                    wrapper.innerHTML = `
+                        <div class="slide active" style="display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                            No active slideshows available
+                        </div>
+                    `;
+                    return;
+                }
+
+                wrapper.innerHTML = this.slides.map((slide, index) => `
+                    <div class="slide ${index === 0 ? 'active' : ''}">
+                        <img src="${slide.url}" alt="${slide.caption}">
+                        <div class="slide-caption">
+                            <h2>${slide.slideshowTitle}</h2>
+                            <p>${slide.caption}</p>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            startAutoPlay() {
+                this.slideshowInterval = setInterval(() => {
+                    if (this.slides.length > 0) {
+                        const slideElements = document.querySelectorAll('.slide');
+                        if (slideElements.length > 0) {
+                            slideElements[this.currentSlideIndex].classList.remove('active');
+                            this.currentSlideIndex = (this.currentSlideIndex + 1) % this.slides.length;
+                            slideElements[this.currentSlideIndex].classList.add('active');
+                        }
+                    }
+                }, 5000);
+            }
+        };
+
+        // Auto-start when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            slideshowPlayer.init();
+            
+            // Request fullscreen on first user interaction
+            document.addEventListener('click', () => {
+                const container = document.getElementById('slideshowContainer');
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>

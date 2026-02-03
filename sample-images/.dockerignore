@@ -1,8 +1,0 @@
-
-node_modules/
-npm-debug.log
-database/*.db*
-uploads/*
-!sample-images/
-*.log
-.DS_Store

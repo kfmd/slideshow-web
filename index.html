@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSU Islam Group - Digital Signage System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <h1>🏥 RSU Islam Group</h1>
+            <h2 style="text-align: center; font-size: 1.25rem; margin-bottom: 2rem; color: var(--text-light);">Digital Signage System</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <h1>🏥 RSU Islam Group - Digital Signage</h1>
+            <div class="navbar-actions">
+                <span id="currentUserName">Admin</span>
+                <button class="btn btn-success" onclick="app.showPublicSlideshow()">▶ Start Slideshow</button>
+                <button class="btn btn-danger" onclick="app.logout()">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" onclick="app.switchView('dashboard')">📊 Dashboard</li>
+                <li onclick="app.switchView('slideshows')">🖼️ Slideshows</li>
+                <li onclick="app.switchView('users')">👥 Users</li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="content-section active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Active Slideshows</h3>
+                        <div class="stat-value" id="activeSlidesCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Slideshows</h3>
+                        <div class="stat-value" id="totalSlidesCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Users</h3>
+                        <div class="stat-value" id="totalUsersCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Displays</h3>
+                        <div class="stat-value" id="totalDisplaysCount">0</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slideshows Section -->
+            <section id="slideshowsSection" class="content-section">
+                <div class="section-header">
+                    <h2>Manage Slideshows</h2>
+                    <button class="btn btn-primary" onclick="app.openSlideshowModal()">+ Create Slideshow</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Images</th>
+                                <th>Status</th>
+                                <th>Created By</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slideshowsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="usersSection" class="content-section">
+                <div class="section-header">
+                    <h2>Manage Users</h2>
+                    <button class="btn btn-primary" onclick="app.openUserModal()">+ Add User</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Slideshow Modal -->
+    <div id="slideshowModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Slideshow</h2>
+                <button class="close-btn" onclick="app.closeSlideshowModal()">&times;</button>
+            </div>
+            <form id="slideshowForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="slideshowTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="slideshowDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="slideshowStatus">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Images</label>
+                        <div class="image-upload-area" onclick="document.getElementById('slideshowImages').click()">
+                            <p>📁 Click to upload images</p>
+                            <p style="font-size: 0.75rem; color: var(--text-light);">Supports multiple images</p>
+                            <input type="file" id="slideshowImages" accept="image/*" multiple>
+                        </div>
+                        <div id="imagePreviewGrid" class="image-preview-grid"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="app.closeSlideshowModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Slideshow</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-btn" onclick="app.closeUserModal()">&times;</button>
+            </div>
+            <form id="userForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="newFullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="newUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="newUserRole">
+                            <option value="admin">Admin</option>
+                            <option value="operator">Operator</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="app.closeUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Fullscreen Slideshow Container -->
+    <div id="slideshowContainer" class="slideshow-container">
+        <div id="slidesWrapper"></div>
+        <div class="slideshow-controls">
+            <button onclick="app.pauseSlideshow()">Pause</button>
+            <button onclick="app.closeSlideshow()">Exit</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
