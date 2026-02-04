@@ -15,7 +15,16 @@
 <body>
     <!-- Fullscreen Slideshow Container -->
     <div id="slideshowContainer" class="slideshow-container active">
+        <!-- Hospital Branding Badge -->
+        <div class="hospital-badge">
+            <h1>RSU Islam Group</h1>
+            <p>Healthcare Excellence</p>
+        </div>
+        
         <div id="slidesWrapper"></div>
+        
+        <!-- Pagination Dots -->
+        <div id="paginationDots" class="pagination-dots"></div>
     </div>
 
     <script>
@@ -46,6 +55,7 @@
                         .flatMap(s => s.images.map(img => ({ 
                             ...img, 
                             slideshowTitle: s.title, 
+                            slideshowDescription: s.description,
                             slideshowId: s.id 
                         })));
                     
@@ -55,6 +65,7 @@
 
             renderSlides() {
                 const wrapper = document.getElementById('slidesWrapper');
+                const paginationDots = document.getElementById('paginationDots');
                 
                 if (this.slides.length === 0) {
                     wrapper.innerHTML = `
@@ -62,28 +73,48 @@
                             No active slideshows available
                         </div>
                     `;
+                    paginationDots.innerHTML = '';
                     return;
                 }
 
+                // Render slides with slideshow description (not image caption)
                 wrapper.innerHTML = this.slides.map((slide, index) => `
                     <div class="slide ${index === 0 ? 'active' : ''}">
-                        <img src="${slide.url}" alt="${slide.caption}">
+                        <img src="${slide.url}" alt="${slide.slideshowTitle}">
                         <div class="slide-caption">
                             <h2>${slide.slideshowTitle}</h2>
-                            <p>${slide.caption}</p>
+                            <p>${slide.slideshowDescription}</p>
                         </div>
                     </div>
                 `).join('');
+                
+                // Render pagination dots
+                paginationDots.innerHTML = this.slides.map((_, index) => 
+                    `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
+                ).join('');
             },
 
             startAutoPlay() {
                 this.slideshowInterval = setInterval(() => {
                     if (this.slides.length > 0) {
                         const slideElements = document.querySelectorAll('.slide');
+                        const dotElements = document.querySelectorAll('.pagination-dots .dot');
+                        
                         if (slideElements.length > 0) {
+                            // Remove active from current
                             slideElements[this.currentSlideIndex].classList.remove('active');
+                            if (dotElements[this.currentSlideIndex]) {
+                                dotElements[this.currentSlideIndex].classList.remove('active');
+                            }
+                            
+                            // Move to next
                             this.currentSlideIndex = (this.currentSlideIndex + 1) % this.slides.length;
+                            
+                            // Add active to new
                             slideElements[this.currentSlideIndex].classList.add('active');
+                            if (dotElements[this.currentSlideIndex]) {
+                                dotElements[this.currentSlideIndex].classList.add('active');
+                            }
                         }
                     }
                 }, 5000);
