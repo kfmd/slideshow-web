@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSU Islam Group - Digital Signage System</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Login Page -->
@@ -31,10 +30,7 @@
     <div id="adminPanel" class="admin-panel hidden">
         <!-- Navbar -->
         <nav class="navbar">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <button class="sidebar-toggle" onclick="app.toggleSidebar()">☰</button>
-                <h1>🏥 RSU Islam Group - Digital Signage</h1>
-            </div>
+            <h1>🏥 RSU Islam Group - Digital Signage</h1>
             <div class="navbar-actions">
                 <span id="currentUserName">Admin</span>
                 <button class="btn btn-success" onclick="app.showPublicSlideshow()">▶ Start Slideshow</button>
@@ -43,12 +39,11 @@
         </nav>
 
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar">
             <ul class="sidebar-menu">
                 <li class="active" onclick="app.switchView('dashboard')">📊 Dashboard</li>
                 <li onclick="app.switchView('slideshows')">🖼️ Slideshows</li>
                 <li onclick="app.switchView('users')">👥 Users</li>
-                <li onclick="app.switchView('settings')">⚙️ Settings</li>
             </ul>
         </aside>
 
@@ -57,23 +52,6 @@
             <!-- Dashboard Section -->
             <section id="dashboardSection" class="content-section active">
                 <h2>Dashboard</h2>
-                
-                <!-- Display Chart -->
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3>📈 Slideshow Display Activity</h3>
-                        <div class="chart-toggle-buttons">
-                            <button class="active" onclick="app.updateChart('24h')">24h</button>
-                            <button onclick="app.updateChart('week')">Week</button>
-                            <button onclick="app.updateChart('month')">Month</button>
-                            <button onclick="app.updateChart('6months')">6 Months</button>
-                            <button onclick="app.updateChart('year')">Year</button>
-                            <button onclick="app.updateChart('all')">All Time</button>
-                        </div>
-                    </div>
-                    <canvas id="displayChart" height="80"></canvas>
-                </div>
-                
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>Active Slideshows</h3>
@@ -121,7 +99,7 @@
             <section id="usersSection" class="content-section">
                 <div class="section-header">
                     <h2>Manage Users</h2>
-                    <button class="btn btn-primary" onclick="app.openUserModal()" id="addUserBtn">+ Add User</button>
+                    <button class="btn btn-primary" onclick="app.openUserModal()">+ Add User</button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -136,42 +114,6 @@
                         </thead>
                         <tbody id="usersTableBody"></tbody>
                     </table>
-                </div>
-            </section>
-
-            <!-- Settings Section -->
-            <section id="settingsSection" class="content-section">
-                <h2>General Settings</h2>
-                <div style="background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: var(--card-shadow); max-width: 800px;">
-                    <form id="settingsForm">
-                        <div class="form-group">
-                            <label>Slideshow Timing (seconds)</label>
-                            <input type="number" id="slideshowTiming" min="1" max="60" value="5" required>
-                            <small style="color: var(--text-light);">How many seconds to display each slide</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Site Logo</label>
-                            <div class="image-upload-area" onclick="document.getElementById('siteLogo').click()" style="padding: 1rem;">
-                                <p>📁 Click to upload logo (PNG, JPG, SVG)</p>
-                                <small style="color: var(--text-light);">Recommended size: 100x100px</small>
-                                <input type="file" id="siteLogo" accept="image/*" style="display: none;">
-                            </div>
-                            <div id="logoPreview" style="margin-top: 1rem;"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Hospital Name</label>
-                            <input type="text" id="hospitalName" value="RSU Islam Group" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Hospital Tagline</label>
-                            <input type="text" id="hospitalTagline" value="Healthcare Excellence" required>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary">Save Settings</button>
-                    </form>
                 </div>
             </section>
         </main>
@@ -256,33 +198,6 @@
         </div>
     </div>
 
-    <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Change Password</h2>
-                <button class="close-btn" onclick="app.closeChangePasswordModal()">&times;</button>
-            </div>
-            <form id="changePasswordForm">
-                <div class="modal-body">
-                    <input type="hidden" id="changePasswordUserId">
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPasswordInput" required minlength="6">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="confirmPasswordInput" required minlength="6">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn" onclick="app.closeChangePasswordModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Fullscreen Slideshow Container -->
     <div id="slideshowContainer" class="slideshow-container">
         <!-- Hospital Branding Badge -->
@@ -299,35 +214,6 @@
         <div class="slideshow-controls">
             <button onclick="app.pauseSlideshow()">Pause</button>
             <button onclick="app.closeSlideshow()">Exit</button>
-        </div>
-    </div>
-
-    <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Change Password</h2>
-                <button class="close-btn" onclick="app.closeChangePasswordModal()">&times;</button>
-            </div>
-            <form id="changePasswordForm">
-                <div class="modal-body">
-                    <p style="margin-bottom: 1rem;">
-                        Changing password for: <strong id="changePasswordUsername"></strong>
-                    </p>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPasswordInput" required minlength="6">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="confirmPasswordInput" required minlength="6">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn" onclick="app.closeChangePasswordModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                </div>
-            </form>
         </div>
     </div>
 

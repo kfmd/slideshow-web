@@ -95,11 +95,6 @@
             },
 
             startAutoPlay() {
-                // Load settings for timing
-                const storedSettings = localStorage.getItem('rsu_settings');
-                const settings = storedSettings ? JSON.parse(storedSettings) : { slideshowTiming: 5 };
-                const timing = (settings.slideshowTiming || 5) * 1000;
-                
                 this.slideshowInterval = setInterval(() => {
                     if (this.slides.length > 0) {
                         const slideElements = document.querySelectorAll('.slide');
@@ -122,36 +117,12 @@
                             }
                         }
                     }
-                }, timing);
+                }, 5000);
             }
         };
 
         // Auto-start when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            // Load and apply settings
-            const storedSettings = localStorage.getItem('rsu_settings');
-            if (storedSettings) {
-                const settings = JSON.parse(storedSettings);
-                const badge = document.querySelector('.hospital-badge');
-                
-                // Update hospital name and tagline
-                badge.querySelector('h1').textContent = settings.hospitalName || 'RSU Islam Group';
-                badge.querySelector('p').textContent = settings.hospitalTagline || 'Healthcare Excellence';
-                
-                // Add logo if exists
-                if (settings.siteLogo) {
-                    badge.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${settings.siteLogo}" style="width: 50px; height: 50px; object-fit: contain;">
-                            <div>
-                                <h1>${settings.hospitalName || 'RSU Islam Group'}</h1>
-                                <p>${settings.hospitalTagline || 'Healthcare Excellence'}</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            
             slideshowPlayer.init();
             
             // Request fullscreen on first user interaction
