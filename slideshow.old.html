@@ -17,10 +17,8 @@
     <div id="slideshowContainer" class="slideshow-container active">
         <!-- Hospital Branding Badge -->
         <div class="hospital-badge">
-            <div>
-                <h1>RSU Islam Group</h1>
-                <p>Healthcare Excellence</p>
-            </div>
+            <h1>RSU Islam Group</h1>
+            <p>Healthcare Excellence</p>
         </div>
         
         <div id="slidesWrapper"></div>
@@ -35,56 +33,15 @@
             currentSlideIndex: 0,
             slideshowInterval: null,
             slides: [],
-            settings: {
-                slideshowTiming: 5,
-                siteLogo: null,
-                hospitalName: 'RSU Islam Group',
-                hospitalTagline: 'Healthcare Excellence'
-            },
 
             init() {
-                this.loadSettings();
                 this.loadSlides();
                 this.startAutoPlay();
                 
                 // Auto-refresh every 5 minutes to get new content
                 setInterval(() => {
-                    this.loadSettings();
                     this.loadSlides();
                 }, 300000);
-            },
-
-            loadSettings() {
-                const storedSettings = localStorage.getItem('rsu_settings');
-                if (storedSettings) {
-                    this.settings = JSON.parse(storedSettings);
-                }
-                this.applySettings();
-            },
-
-            applySettings() {
-                // Update hospital badge with correct structure
-                const badge = document.querySelector('.hospital-badge');
-                if (badge) {
-                    badge.innerHTML = `
-                        ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo">` : ''}
-                        <div>
-                            <h1>${this.settings.hospitalName}</h1>
-                            <p>${this.settings.hospitalTagline}</p>
-                        </div>
-                    `;
-                }
-                
-                // Update favicon
-                if (this.settings.siteLogo) {
-                    let favicon = document.querySelector('link[rel="icon"]');
-                    if (!favicon) {
-                        favicon = document.createElement('link');
-                        favicon.rel = 'icon';
-                        document.head.appendChild(favicon);
-                    }
-                    favicon.href = this.settings.siteLogo;
-                }
             },
 
             loadSlides() {
