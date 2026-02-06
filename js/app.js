@@ -174,9 +174,225 @@ const app = {
     },
 
     renderChart() {
-        // This will use Chart.js when we add the library
-        console.log('Chart rendering for period:', this.chartPeriod);
-        // For now, placeholder
+        const canvas = document.getElementById('displayChart');
+        if (!canvas) return;
+        
+        // Destroy existing chart if it exists
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+        }
+        
+        // Generate data based on period
+        const data = this.generateChartData(this.chartPeriod);
+        
+        const ctx = canvas.getContext('2d');
+        this.chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Slideshow Displays',
+                    data: data.values,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2563eb',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            color: '#6b7280'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#6b7280'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    },
+
+    generateChartData(period) {
+        // Get display history from slideshows
+        const now = new Date();
+        let labels = [];
+        let values = [];
+        
+        switch(period) {
+            case '24h':
+                // Last 24 hours by hour
+                for (let i = 23; i >= 0; i--) {
+                    const hour = new Date(now - i * 60 * 60 * 1000);
+                    labels.push(hour.getHours() + ':00');
+                    values.push(this.getDisplaysInHour(hour));
+                }
+                break;
+                
+            case 'week':
+                // Last 7 days
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                for (let i = 6; i >= 0; i--) {
+                    const day = new Date(now - i * 24 * 60 * 60 * 1000);
+                    labels.push(days[day.getDay()]);
+                    values.push(this.getDisplaysInDay(day));
+                }
+                break;
+                
+            case 'month':
+                // Last 30 days
+                for (let i = 29; i >= 0; i--) {
+                    const day = new Date(now - i * 24 * 60 * 60 * 1000);
+                    labels.push((day.getMonth() + 1) + '/' + day.getDate());
+                    values.push(this.getDisplaysInDay(day));
+                }
+                break;
+                
+            case '6months':
+                // Last 6 months
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                for (let i = 5; i >= 0; i--) {
+                    const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    labels.push(months[month.getMonth()]);
+                    values.push(this.getDisplaysInMonth(month));
+                }
+                break;
+                
+            case 'year':
+                // Last 12 months
+                const monthsYear = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                for (let i = 11; i >= 0; i--) {
+                    const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    labels.push(monthsYear[month.getMonth()]);
+                    values.push(this.getDisplaysInMonth(month));
+                }
+                break;
+                
+            case 'all':
+                // Group by month for all time
+                const allMonths = this.getAllMonthsWithData();
+                allMonths.forEach(month => {
+                    labels.push(month.label);
+                    values.push(month.count);
+                });
+                break;
+        }
+        
+        return { labels, values };
+    },
+
+    getDisplaysInHour(targetHour) {
+        // Count displays in the specific hour
+        return this.slideshows.reduce((sum, slideshow) => {
+            if (slideshow.lastDisplayed) {
+                const displayDate = new Date(slideshow.lastDisplayed);
+                if (displayDate.getDate() === targetHour.getDate() && 
+                    displayDate.getHours() === targetHour.getHours()) {
+                    return sum + (slideshow.displayCount || 0);
+                }
+            }
+            return sum;
+        }, 0);
+    },
+
+    getDisplaysInDay(targetDay) {
+        // Count displays in the specific day
+        return this.slideshows.reduce((sum, slideshow) => {
+            if (slideshow.lastDisplayed) {
+                const displayDate = new Date(slideshow.lastDisplayed);
+                if (displayDate.toDateString() === targetDay.toDateString()) {
+                    return sum + (slideshow.displayCount || 0);
+                }
+            }
+            return sum;
+        }, 0);
+    },
+
+    getDisplaysInMonth(targetMonth) {
+        // Count displays in the specific month
+        return this.slideshows.reduce((sum, slideshow) => {
+            if (slideshow.lastDisplayed) {
+                const displayDate = new Date(slideshow.lastDisplayed);
+                if (displayDate.getMonth() === targetMonth.getMonth() && 
+                    displayDate.getFullYear() === targetMonth.getFullYear()) {
+                    return sum + (slideshow.displayCount || 0);
+                }
+            }
+            return sum;
+        }, 0);
+    },
+
+    getAllMonthsWithData() {
+        // Get all unique months that have data
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthCounts = {};
+        
+        this.slideshows.forEach(slideshow => {
+            if (slideshow.lastDisplayed) {
+                const date = new Date(slideshow.lastDisplayed);
+                const key = `${date.getFullYear()}-${date.getMonth()}`;
+                const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
+                
+                if (!monthCounts[key]) {
+                    monthCounts[key] = { label, count: 0 };
+                }
+                monthCounts[key].count += (slideshow.displayCount || 0);
+            }
+        });
+        
+        return Object.values(monthCounts);
+    },
+
+    updateChart(period) {
+        this.chartPeriod = period;
+        
+        // Update button states
+        document.querySelectorAll('.chart-toggle-buttons button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Re-render chart
+        this.renderChart();
     },
 
     renderSlideshows() {
