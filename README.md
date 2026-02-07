@@ -384,6 +384,6 @@ docker-compose up -d --build
 
 ---
 
-**Version:** 2.1.0
+**Version:** 2.1
 **Date:** February 2026
 **Status:** ✅ Production Ready
