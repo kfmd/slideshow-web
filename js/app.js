@@ -688,6 +688,15 @@ const app = {
                 return;
             }
             
+            // Store slideshow info for pagination
+            this.previewSlideshows = data.slideshows.map(s => ({
+                id: s.id,
+                title: s.title,
+                description: s.description,
+                imageCount: s.images.length
+            }));
+            
+            // Flatten all images
             const activeSlides = data.slideshows.flatMap(s => 
                 s.images.map(img => ({ 
                     ...img, 
@@ -722,12 +731,14 @@ const app = {
                 </div>
             `).join('');
             
-            paginationDots.innerHTML = activeSlides.map((_, index) => 
-                `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
+            // NEW: Create pagination dots per slideshow (not per image!)
+            paginationDots.innerHTML = this.previewSlideshows.map((slideshow, index) => 
+                `<div class="dot ${index === 0 ? 'active' : ''}" title="${slideshow.title}"></div>`
             ).join('');
 
             container.classList.add('active');
             this.currentSlideIndex = 0;
+            this.currentSlideshowIndex = 0;  // NEW: Track current slideshow
             this.isPaused = false;
             this.startSlideshow(activeSlides);
 
@@ -754,13 +765,27 @@ const app = {
                 const slideElements = document.querySelectorAll('.slide');
                 const dotElements = document.querySelectorAll('.pagination-dots .dot');
                 
+                // Hide current slide
                 slideElements[this.currentSlideIndex]?.classList.remove('active');
-                dotElements[this.currentSlideIndex]?.classList.remove('active');
                 
+                // Advance to next slide
                 this.currentSlideIndex = (this.currentSlideIndex + 1) % slides.length;
                 
+                // Show next slide
                 slideElements[this.currentSlideIndex]?.classList.add('active');
-                dotElements[this.currentSlideIndex]?.classList.add('active');
+                
+                // NEW: Update slideshow pagination dot
+                if (this.previewSlideshows && this.previewSlideshows.length > 0) {
+                    const currentSlide = slides[this.currentSlideIndex];
+                    const newSlideshowIndex = this.previewSlideshows.findIndex(s => s.id === currentSlide.slideshowId);
+                    
+                    if (newSlideshowIndex >= 0 && newSlideshowIndex !== this.currentSlideshowIndex) {
+                        // Changed slideshow, update pagination
+                        dotElements[this.currentSlideshowIndex]?.classList.remove('active');
+                        dotElements[newSlideshowIndex]?.classList.add('active');
+                        this.currentSlideshowIndex = newSlideshowIndex;
+                    }
+                }
             }
         }, timing);
     },
