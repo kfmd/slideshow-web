@@ -1,7 +1,5 @@
-// RSU Islam Group Digital Signage - Complete Application
-// All 7 Fixes Integrated: Database Persistence, File Uploads, Drag-Drop, Placeholder, Hot Reload, Gradient
-
-const API_BASE = '';  // Same domain
+// RSU Islam Group Digital Signage - COMPLETE WORKING VERSION
+const API_BASE = '';
 
 const app = {
     currentUser: null,
@@ -14,7 +12,9 @@ const app = {
         hospitalTagline: 'Healthcare Excellence'
     },
     currentView: 'dashboard',
-    selectedImages: [],
+    selectedImages: [],     // For preview (base64 for display)
+    selectedFiles: [],      // CRITICAL FIX: Actual File objects for upload
+    deletedImageIds: [],    // NEW: Track which existing images to delete
     currentEditId: null,
     currentSlideIndex: 0,
     slideshowInterval: null,
@@ -22,13 +22,11 @@ const app = {
     chartInstance: null,
     chartPeriod: '24h',
 
-    // ========== INITIALIZATION ==========
     async init() {
         this.loadSettings();
         this.checkAuth();
     },
 
-    // ========== AUTHENTICATION ==========
     checkAuth() {
         const storedUser = localStorage.getItem('rsu_current_user');
         if (storedUser) {
@@ -86,7 +84,6 @@ const app = {
         this.showLoginPage();
     },
 
-    // ========== UI NAVIGATION ==========
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.querySelector('.main-content');
@@ -124,7 +121,6 @@ const app = {
         }
     },
 
-    // ========== DASHBOARD ==========
     async updateDashboard() {
         try {
             const response = await fetch(`${API_BASE}/api/dashboard/stats`);
@@ -150,7 +146,6 @@ const app = {
         }
         
         const data = this.generateChartData(this.chartPeriod);
-        
         const ctx = canvas.getContext('2d');
         this.chartInstance = new Chart(ctx, {
             type: 'line',
@@ -165,34 +160,16 @@ const app = {
                     fill: true,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#2563eb',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 6
+                    pointBackgroundColor: '#2563eb'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, color: '#6b7280' },
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
-                    },
-                    x: {
-                        ticks: { color: '#6b7280' },
-                        grid: { display: false }
-                    }
+                    y: { beginAtZero: true, ticks: { stepSize: 1, color: '#6b7280' } },
+                    x: { ticks: { color: '#6b7280' } }
                 }
             }
         });
@@ -225,19 +202,15 @@ const app = {
 
     updateChart(period) {
         this.chartPeriod = period;
-        document.querySelectorAll('.chart-toggle-buttons button').forEach(btn => {
-            btn.classList.remove('active');
-        });
+        document.querySelectorAll('.chart-toggle-buttons button').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
         this.renderChart();
     },
 
-    // ========== SLIDESHOWS (Fix #1 - Database Persistence) ==========
     async loadSlideshows() {
         try {
             const response = await fetch(`${API_BASE}/api/slideshows`);
             const data = await response.json();
-            
             if (data.success) {
                 this.slideshows = data.slideshows;
             }
@@ -264,9 +237,7 @@ const app = {
                                      onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
                                      alt="${slideshow.images[0].caption}" 
                                      style="width: 80px; height: 60px; object-fit: cover; border-radius: 0.25rem;">
-                                ${slideshow.images.length > 1 ? `
-                                    <span class="image-counter-badge">+${slideshow.images.length - 1}</span>
-                                ` : ''}
+                                ${slideshow.images.length > 1 ? `<span class="image-counter-badge">+${slideshow.images.length - 1}</span>` : ''}
                             </div>
                         ` : '<img src="/assets/images/placeholder.jpg" style="width: 80px; height: 60px; object-fit: cover; border-radius: 0.25rem;">'}
                         <small style="color: var(--text-light);">${slideshow.images.length} total</small>
@@ -295,9 +266,8 @@ const app = {
     },
 
     toggleDescription(event) {
-        const element = event.currentTarget;
-        element.classList.toggle('collapsed');
-        element.classList.toggle('expanded');
+        event.currentTarget.classList.toggle('collapsed');
+        event.currentTarget.classList.toggle('expanded');
     },
 
     async toggleSlideshowStatus(id, isActive) {
@@ -325,10 +295,11 @@ const app = {
         }
     },
 
-    // ========== SLIDESHOW MODAL ==========
     openSlideshowModal() {
         this.currentEditId = null;
         this.selectedImages = [];
+        this.selectedFiles = [];  // CRITICAL: Clear both arrays
+        this.deletedImageIds = []; // NEW: Clear deleted IDs
         document.getElementById('slideshowForm').reset();
         document.getElementById('imagePreviewGrid').innerHTML = '';
         document.querySelector('#slideshowModal h2').textContent = 'Create New Slideshow';
@@ -344,12 +315,13 @@ const app = {
         const slideshow = this.slideshows.find(s => s.id === id);
         if (slideshow) {
             this.currentEditId = id;
+            this.deletedImageIds = []; // NEW: Clear deleted IDs for this edit session
             document.getElementById('slideshowTitle').value = slideshow.title;
             document.getElementById('slideshowDescription').value = slideshow.description;
             document.getElementById('slideshowStatus').value = slideshow.status;
             
-            // Load existing images
             this.selectedImages = [...slideshow.images];
+            this.selectedFiles = [];
             this.renderImagePreviews();
             
             document.querySelector('#slideshowModal h2').textContent = 'Edit Slideshow';
@@ -358,11 +330,14 @@ const app = {
         }
     },
 
-    // ========== IMAGE PREVIEW WITH DRAG-DROP (Fix #6) ==========
     renderImagePreviews() {
         const previewGrid = document.getElementById('imagePreviewGrid');
         previewGrid.innerHTML = '';
         previewGrid.className = 'image-preview-grid';
+        
+        // Filter out any undefined or null entries first
+        this.selectedImages = this.selectedImages.filter(img => img && img.url);
+        this.selectedFiles = this.selectedFiles.filter(file => file);
         
         this.selectedImages.forEach((img, index) => {
             const preview = document.createElement('div');
@@ -370,16 +345,35 @@ const app = {
             preview.draggable = true;
             preview.dataset.index = index;
             
-            // Fix #4 - Placeholder fallback
-            preview.innerHTML = `
-                <div class="drag-handle">☰ ${index + 1}</div>
-                <img src="${img.url}" 
-                     onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
-                     alt="${img.caption || 'Preview'}">
-                <button class="remove-btn" onclick="app.removeImage(${index})">&times;</button>
-            `;
+            // Create image element
+            const imgElement = document.createElement('img');
+            imgElement.src = img.url || '';
+            imgElement.alt = img.caption || 'Preview';
+            imgElement.onerror = function() {
+                this.onerror = null;
+                this.src = '/assets/images/placeholder.jpg';
+            };
             
-            // Drag and drop events
+            // Create drag handle
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'drag-handle';
+            dragHandle.textContent = `☰ ${index + 1}`;
+            
+            // Create remove button with proper event listener
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '×';
+            removeBtn.type = 'button';  // Prevent form submission
+            removeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.removeImage(index);
+            });
+            
+            preview.appendChild(dragHandle);
+            preview.appendChild(imgElement);
+            preview.appendChild(removeBtn);
+            
             preview.addEventListener('dragstart', (e) => this.handleDragStart(e));
             preview.addEventListener('dragend', (e) => this.handleDragEnd(e));
             preview.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -390,7 +384,6 @@ const app = {
         });
     },
 
-    // Drag and Drop Handlers (Fix #6)
     handleDragStart(e) {
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
@@ -399,9 +392,7 @@ const app = {
 
     handleDragEnd(e) {
         e.target.classList.remove('dragging');
-        document.querySelectorAll('.image-preview').forEach(el => {
-            el.classList.remove('drag-over');
-        });
+        document.querySelectorAll('.image-preview').forEach(el => el.classList.remove('drag-over'));
     },
 
     handleDragOver(e) {
@@ -428,11 +419,16 @@ const app = {
             const toIndex = parseInt(toElement.dataset.index);
             
             if (fromIndex !== toIndex) {
-                // Reorder array
-                const [movedItem] = this.selectedImages.splice(fromIndex, 1);
-                this.selectedImages.splice(toIndex, 0, movedItem);
+                // Reorder preview images
+                const [movedImage] = this.selectedImages.splice(fromIndex, 1);
+                this.selectedImages.splice(toIndex, 0, movedImage);
                 
-                // Re-render
+                // CRITICAL: Also reorder actual files
+                if (this.selectedFiles.length > fromIndex) {
+                    const [movedFile] = this.selectedFiles.splice(fromIndex, 1);
+                    this.selectedFiles.splice(toIndex, 0, movedFile);
+                }
+                
                 this.renderImagePreviews();
             }
         }
@@ -441,17 +437,41 @@ const app = {
     },
 
     removeImage(index) {
+        console.log('Removing image at index:', index);
+        console.log('Before - Images:', this.selectedImages.length, 'Files:', this.selectedFiles.length);
+        
+        // Validate index
+        if (index < 0 || index >= this.selectedImages.length) {
+            console.error('Invalid index:', index);
+            return;
+        }
+        
+        // CRITICAL: If this is an existing image (has an ID), track it for deletion
+        const imageToRemove = this.selectedImages[index];
+        if (imageToRemove.id) {
+            console.log('Tracking image ID for deletion:', imageToRemove.id);
+            this.deletedImageIds.push(imageToRemove.id);
+        }
+        
+        // Remove from both arrays
         this.selectedImages.splice(index, 1);
+        
+        // Only remove from selectedFiles if it exists at that index
+        if (index < this.selectedFiles.length) {
+            this.selectedFiles.splice(index, 1);
+        }
+        
+        console.log('After - Images:', this.selectedImages.length, 'Files:', this.selectedFiles.length);
+        console.log('Deleted IDs:', this.deletedImageIds);
+        
+        // Re-render
         this.renderImagePreviews();
     },
 
     async deleteSlideshow(id) {
         if (confirm('Are you sure you want to delete this slideshow?')) {
             try {
-                const response = await fetch(`${API_BASE}/api/slideshows/${id}`, {
-                    method: 'DELETE'
-                });
-                
+                const response = await fetch(`${API_BASE}/api/slideshows/${id}`, { method: 'DELETE' });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -460,17 +480,15 @@ const app = {
                     await this.updateDashboard();
                 }
             } catch (error) {
-                console.error('Delete slideshow error:', error);
+                console.error('Delete error:', error);
             }
         }
     },
 
-    // ========== USERS ==========
     async loadUsers() {
         try {
             const response = await fetch(`${API_BASE}/api/users`);
             const data = await response.json();
-            
             if (data.success) {
                 this.users = data.users;
             }
@@ -481,11 +499,9 @@ const app = {
 
     renderUsers() {
         const tbody = document.getElementById('usersTableBody');
-        
-        let usersToShow = this.users;
-        if (this.currentUser.role === 'operator') {
-            usersToShow = this.users.filter(u => u.id === this.currentUser.id);
-        }
+        let usersToShow = this.currentUser.role === 'operator' 
+            ? this.users.filter(u => u.id === this.currentUser.id)
+            : this.users;
         
         tbody.innerHTML = usersToShow.map(user => `
             <tr>
@@ -495,9 +511,7 @@ const app = {
                 <td><span class="badge badge-${user.status === 'active' ? 'success' : 'danger'}">${user.status}</span></td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn btn-sm btn-primary" onclick="app.openChangePasswordModal(${user.id})">
-                            Change Password
-                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="app.openChangePasswordModal(${user.id})">Change Password</button>
                         ${(this.currentUser.role === 'admin' && user.id !== 1) ? `
                             <button class="btn btn-sm btn-danger" onclick="app.deleteUser(${user.id})">Delete</button>
                         ` : ''}
@@ -541,14 +555,10 @@ const app = {
     },
 
     async deleteUser(id) {
-        if (confirm('Are you sure you want to delete this user?')) {
+        if (confirm('Are you sure?')) {
             try {
-                const response = await fetch(`${API_BASE}/api/users/${id}`, {
-                    method: 'DELETE'
-                });
-                
+                const response = await fetch(`${API_BASE}/api/users/${id}`, { method: 'DELETE' });
                 const data = await response.json();
-                
                 if (data.success) {
                     await this.loadUsers();
                     this.renderUsers();
@@ -576,7 +586,6 @@ const app = {
         this.closeChangePasswordModal();
     },
 
-    // ========== SETTINGS ==========
     loadSettings() {
         const storedSettings = localStorage.getItem('rsu_settings');
         if (storedSettings) {
@@ -617,24 +626,19 @@ const app = {
         this.settings.slideshowTiming = parseInt(timing);
         this.settings.hospitalName = hospitalName;
         this.settings.hospitalTagline = hospitalTagline;
-        
-        if (logo) {
-            this.settings.siteLogo = logo;
-        }
-        
+        if (logo) this.settings.siteLogo = logo;
         this.saveSettings();
         this.applySettings();
         alert('Settings saved successfully!');
     },
 
-    // ========== SLIDESHOW DISPLAY ==========
     async showPublicSlideshow() {
         try {
             const response = await fetch(`${API_BASE}/api/slideshows/active`);
             const data = await response.json();
             
             if (!data.success || data.slideshows.length === 0) {
-                alert('No active slideshows available');
+                alert('No active slideshows');
                 return;
             }
             
@@ -651,7 +655,6 @@ const app = {
             const wrapper = document.getElementById('slidesWrapper');
             const paginationDots = document.getElementById('paginationDots');
             
-            // Update hospital badge
             const badge = container.querySelector('.hospital-badge');
             badge.innerHTML = `
                 ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo">` : ''}
@@ -661,7 +664,6 @@ const app = {
                 </div>
             `;
             
-            // Render slides with placeholder fallback (Fix #4)
             wrapper.innerHTML = activeSlides.map((slide, index) => `
                 <div class="slide ${index === 0 ? 'active' : ''}">
                     <img src="${slide.url}" 
@@ -674,7 +676,6 @@ const app = {
                 </div>
             `).join('');
             
-            // Render pagination dots
             paginationDots.innerHTML = activeSlides.map((_, index) => 
                 `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
             ).join('');
@@ -684,20 +685,18 @@ const app = {
             this.isPaused = false;
             this.startSlideshow(activeSlides);
 
-            // Fullscreen
             if (container.requestFullscreen) {
                 container.requestFullscreen();
             } else if (container.webkitRequestFullscreen) {
                 container.webkitRequestFullscreen();
             }
 
-            // Update display counts
             const uniqueIds = [...new Set(activeSlides.map(s => s.slideshowId))];
             uniqueIds.forEach(id => {
                 fetch(`${API_BASE}/api/slideshows/${id}/display`, { method: 'POST' });
             });
         } catch (error) {
-            console.error('Slideshow display error:', error);
+            console.error('Slideshow error:', error);
             alert('Failed to load slideshow');
         }
     },
@@ -709,17 +708,13 @@ const app = {
                 const slideElements = document.querySelectorAll('.slide');
                 const dotElements = document.querySelectorAll('.pagination-dots .dot');
                 
-                slideElements[this.currentSlideIndex].classList.remove('active');
-                if (dotElements[this.currentSlideIndex]) {
-                    dotElements[this.currentSlideIndex].classList.remove('active');
-                }
+                slideElements[this.currentSlideIndex]?.classList.remove('active');
+                dotElements[this.currentSlideIndex]?.classList.remove('active');
                 
                 this.currentSlideIndex = (this.currentSlideIndex + 1) % slides.length;
                 
-                slideElements[this.currentSlideIndex].classList.add('active');
-                if (dotElements[this.currentSlideIndex]) {
-                    dotElements[this.currentSlideIndex].classList.add('active');
-                }
+                slideElements[this.currentSlideIndex]?.classList.add('active');
+                dotElements[this.currentSlideIndex]?.classList.add('active');
             }
         }, timing);
     },
@@ -732,28 +727,22 @@ const app = {
     closeSlideshow() {
         clearInterval(this.slideshowInterval);
         document.getElementById('slideshowContainer').classList.remove('active');
-        
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        }
-
+        if (document.exitFullscreen) document.exitFullscreen();
         this.updateDashboard();
     }
 };
 
 // ========== EVENT LISTENERS ==========
 document.addEventListener('DOMContentLoaded', () => {
-    // Login form
     document.getElementById('loginForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        app.login(username, password);
+        app.login(
+            document.getElementById('loginUsername').value,
+            document.getElementById('loginPassword').value
+        );
     });
 
-    // Slideshow form (Fix #2 - File upload to assets/images/uploads)
+    // CRITICAL FIX #1: Proper file handling in form submission
     document.getElementById('slideshowForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -763,16 +752,21 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('status', document.getElementById('slideshowStatus').value);
         formData.append('createdBy', app.currentUser.username);
         
-        // Add images
-        const fileInput = document.getElementById('slideshowImages');
-        if (fileInput.files.length > 0) {
-            for (let file of fileInput.files) {
+        // CRITICAL FIX: Use selectedFiles array (not fileInput.files which is empty!)
+        if (app.selectedFiles.length > 0) {
+            app.selectedFiles.forEach(file => {
                 formData.append('images', file);
-            }
+            });
         }
         
-        const captions = app.selectedImages.map(img => img.caption || '');
+        const captions = app.selectedImages.map((img, i) => img.caption || `Slide ${i + 1}`);
         formData.append('captions', JSON.stringify(captions));
+        
+        // NEW: Send deleted image IDs for server-side deletion
+        if (app.deletedImageIds.length > 0) {
+            formData.append('deletedImageIds', JSON.stringify(app.deletedImageIds));
+            console.log('Sending deleted image IDs:', app.deletedImageIds);
+        }
         
         try {
             const url = app.currentEditId 
@@ -780,11 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : `${API_BASE}/api/slideshows`;
             const method = app.currentEditId ? 'PUT' : 'POST';
             
-            const response = await fetch(url, {
-                method: method,
-                body: formData
-            });
-            
+            const response = await fetch(url, { method, body: formData });
             const data = await response.json();
             
             if (data.success) {
@@ -794,25 +784,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.renderSlideshows();
                 await app.updateDashboard();
             } else {
-                alert(data.message || 'Failed to save slideshow');
+                alert(data.message || 'Failed to save');
             }
         } catch (error) {
-            console.error('Save slideshow error:', error);
+            console.error('Save error:', error);
             alert('Failed to save slideshow');
         }
     });
 
-    // User form
     document.getElementById('userForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const username = document.getElementById('newUsername').value;
-        const fullName = document.getElementById('newFullName').value;
-        const password = document.getElementById('newPassword').value;
-        const role = document.getElementById('newUserRole').value;
-        app.addUser(username, fullName, password, role);
+        app.addUser(
+            document.getElementById('newUsername').value,
+            document.getElementById('newFullName').value,
+            document.getElementById('newPassword').value,
+            document.getElementById('newUserRole').value
+        );
     });
 
-    // Image upload - APPEND instead of replace (Fix #3)
+    // CRITICAL FIX #2: Keep File objects when images are selected
     document.getElementById('slideshowImages').addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         const startIndex = app.selectedImages.length;
@@ -821,30 +811,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const actualIndex = startIndex + index;
-                const imageData = {
+                // Add preview
+                app.selectedImages.push({
                     url: event.target.result,
-                    caption: `Slide ${actualIndex + 1}`,
-                    file: file  // Keep reference for upload
-                };
-                app.selectedImages.push(imageData);
+                    caption: `Slide ${actualIndex + 1}`
+                });
+                // CRITICAL: Keep actual File object
+                app.selectedFiles.push(file);
                 app.renderImagePreviews();
             };
             reader.readAsDataURL(file);
         });
         
-        e.target.value = '';  // Clear input
+        e.target.value = '';
     });
 
-    // Settings form
     document.getElementById('settingsForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const timing = document.getElementById('slideshowTiming').value;
-        const hospitalName = document.getElementById('hospitalName').value;
-        const hospitalTagline = document.getElementById('hospitalTagline').value;
-        app.saveGeneralSettings(timing, app.settings.siteLogo, hospitalName, hospitalTagline);
+        app.saveGeneralSettings(
+            document.getElementById('slideshowTiming').value,
+            app.settings.siteLogo,
+            document.getElementById('hospitalName').value,
+            document.getElementById('hospitalTagline').value
+        );
     });
 
-    // Logo upload
     document.getElementById('siteLogo').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -852,14 +843,13 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (event) => {
                 app.settings.siteLogo = event.target.result;
                 document.getElementById('logoPreview').innerHTML = `
-                    <img src="${event.target.result}" class="logo-preview" alt="Site Logo">
+                    <img src="${event.target.result}" class="logo-preview" alt="Logo">
                 `;
             };
             reader.readAsDataURL(file);
         }
     });
 
-    // Change password form
     const cpForm = document.getElementById('changePasswordForm');
     if (cpForm) {
         cpForm.addEventListener('submit', (e) => {
@@ -876,6 +866,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize app
     app.init();
 });

@@ -3,34 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSU Islam Group - Slideshow Display</title>
+    <title>RSU Islam Group - Digital Signage</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            background: #000;
         }
     </style>
 </head>
 <body>
-    <!-- Fullscreen Slideshow Container -->
     <div id="slideshowContainer" class="slideshow-container active">
-        <!-- Hospital Branding Badge -->
         <div class="hospital-badge">
             <div>
                 <h1>RSU Islam Group</h1>
-                <p>Healthcare Excellence</p>
+                <p>Ramah, Amanah, Profesional, Islami (RAPI)</p>
             </div>
         </div>
         
         <div id="slidesWrapper"></div>
-        
-        <!-- Pagination Dots -->
         <div id="paginationDots" class="pagination-dots"></div>
     </div>
 
     <script>
-        // Standalone Slideshow Player
         const slideshowPlayer = {
             currentSlideIndex: 0,
             slideshowInterval: null,
@@ -39,35 +35,37 @@
                 slideshowTiming: 5,
                 siteLogo: null,
                 hospitalName: 'RSU Islam Group',
-                hospitalTagline: 'Healthcare Excellence'
+                hospitalTagline: 'Ramah, Amanah, Profesional, Islami (RAPI)'
             },
 
-            init() {
-                this.loadSettings();
-                this.loadSlides();
+            async init() {
+                await this.loadSettings();
+                await this.loadSlides();
                 this.startAutoPlay();
                 
-                // Auto-refresh every 5 minutes to get new content
-                setInterval(() => {
-                    this.loadSettings();
-                    this.loadSlides();
+                setInterval(async () => {
+                    await this.loadSettings();
+                    await this.loadSlides();
                 }, 300000);
             },
 
-            loadSettings() {
-                const storedSettings = localStorage.getItem('rsu_settings');
-                if (storedSettings) {
-                    this.settings = JSON.parse(storedSettings);
+            async loadSettings() {
+                try {
+                    const storedSettings = localStorage.getItem('rsu_settings');
+                    if (storedSettings) {
+                        this.settings = JSON.parse(storedSettings);
+                    }
+                    this.applySettings();
+                } catch (error) {
+                    console.error('Settings load error:', error);
                 }
-                this.applySettings();
             },
 
             applySettings() {
-                // Update hospital badge with correct structure
                 const badge = document.querySelector('.hospital-badge');
                 if (badge) {
                     badge.innerHTML = `
-                        ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo">` : ''}
+                        ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo" style="width: 50px; height: 50px; object-fit: contain; flex-shrink: 0;">` : ''}
                         <div>
                             <h1>${this.settings.hospitalName}</h1>
                             <p>${this.settings.hospitalTagline}</p>
@@ -75,7 +73,6 @@
                     `;
                 }
                 
-                // Update favicon
                 if (this.settings.siteLogo) {
                     let favicon = document.querySelector('link[rel="icon"]');
                     if (!favicon) {
@@ -87,10 +84,40 @@
                 }
             },
 
-            loadSlides() {
-                // Load from localStorage (temporary, will be replaced with API call)
+            async loadSlides() {
+                try {
+                    const response = await fetch('/api/slideshows/active');
+                    const data = await response.json();
+                    
+                    if (data.success && data.slideshows.length > 0) {
+                        // FIXED: Use description, not title twice
+                        this.slides = data.slideshows.flatMap(s => 
+                            s.images.map(img => ({ 
+                                ...img, 
+                                slideshowTitle: s.title,
+                                slideshowDescription: s.description || s.title,
+                                slideshowId: s.id 
+                            }))
+                        );
+                        
+                        this.renderSlides();
+                        
+                        const uniqueIds = [...new Set(this.slides.map(s => s.slideshowId))];
+                        uniqueIds.forEach(id => {
+                            fetch(`/api/slideshows/${id}/display`, { method: 'POST' })
+                                .catch(err => console.error('Display count error:', err));
+                        });
+                    } else {
+                        this.loadSlidesFromLocalStorage();
+                    }
+                } catch (error) {
+                    console.error('Load slides error:', error);
+                    this.loadSlidesFromLocalStorage();
+                }
+            },
+
+            loadSlidesFromLocalStorage() {
                 const storedSlideshows = localStorage.getItem('rsu_slideshows');
-                
                 if (storedSlideshows) {
                     const slideshows = JSON.parse(storedSlideshows);
                     this.slides = slideshows
@@ -98,10 +125,9 @@
                         .flatMap(s => s.images.map(img => ({ 
                             ...img, 
                             slideshowTitle: s.title, 
-                            slideshowDescription: s.description,
+                            slideshowDescription: s.description || s.title,
                             slideshowId: s.id 
                         })));
-                    
                     this.renderSlides();
                 }
             },
@@ -112,18 +138,23 @@
                 
                 if (this.slides.length === 0) {
                     wrapper.innerHTML = `
-                        <div class="slide active" style="display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                            No active slideshows available
+                        <div class="slide active" style="display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; text-align: center; padding: 2rem;">
+                            <div>
+                                <h2>No Active Slideshows</h2>
+                                <p style="font-size: 1.2rem; margin-top: 1rem;">Create slideshows in admin panel</p>
+                            </div>
                         </div>
                     `;
                     paginationDots.innerHTML = '';
                     return;
                 }
 
-                // Render slides with slideshow description (not image caption)
+                // FIXED: Show description in subtitle
                 wrapper.innerHTML = this.slides.map((slide, index) => `
                     <div class="slide ${index === 0 ? 'active' : ''}">
-                        <img src="${slide.url}" alt="${slide.slideshowTitle}">
+                        <img src="${slide.url}" 
+                             onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
+                             alt="${slide.slideshowTitle}">
                         <div class="slide-caption">
                             <h2>${slide.slideshowTitle}</h2>
                             <p>${slide.slideshowDescription}</p>
@@ -131,14 +162,16 @@
                     </div>
                 `).join('');
                 
-                // Render pagination dots
                 paginationDots.innerHTML = this.slides.map((_, index) => 
                     `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
                 ).join('');
             },
 
             startAutoPlay() {
-                // Load settings for timing
+                if (this.slideshowInterval) {
+                    clearInterval(this.slideshowInterval);
+                }
+
                 const storedSettings = localStorage.getItem('rsu_settings');
                 const settings = storedSettings ? JSON.parse(storedSettings) : { slideshowTiming: 5 };
                 const timing = (settings.slideshowTiming || 5) * 1000;
@@ -149,65 +182,58 @@
                         const dotElements = document.querySelectorAll('.pagination-dots .dot');
                         
                         if (slideElements.length > 0) {
-                            // Remove active from current
-                            slideElements[this.currentSlideIndex].classList.remove('active');
-                            if (dotElements[this.currentSlideIndex]) {
-                                dotElements[this.currentSlideIndex].classList.remove('active');
-                            }
+                            slideElements[this.currentSlideIndex]?.classList.remove('active');
+                            dotElements[this.currentSlideIndex]?.classList.remove('active');
                             
-                            // Move to next
                             this.currentSlideIndex = (this.currentSlideIndex + 1) % this.slides.length;
                             
-                            // Add active to new
-                            slideElements[this.currentSlideIndex].classList.add('active');
-                            if (dotElements[this.currentSlideIndex]) {
-                                dotElements[this.currentSlideIndex].classList.add('active');
-                            }
+                            slideElements[this.currentSlideIndex]?.classList.add('active');
+                            dotElements[this.currentSlideIndex]?.classList.add('active');
                         }
                     }
                 }, timing);
             }
         };
 
-        // Auto-start when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load and apply settings
-            const storedSettings = localStorage.getItem('rsu_settings');
-            if (storedSettings) {
-                const settings = JSON.parse(storedSettings);
-                const badge = document.querySelector('.hospital-badge');
-                
-                // Update hospital name and tagline
-                badge.querySelector('h1').textContent = settings.hospitalName || 'RSU Islam Group';
-                badge.querySelector('p').textContent = settings.hospitalTagline || 'Healthcare Excellence';
-                
-                // Add logo if exists
-                if (settings.siteLogo) {
-                    badge.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${settings.siteLogo}" style="width: 50px; height: 50px; object-fit: contain;">
-                            <div>
-                                <h1>${settings.hospitalName || 'RSU Islam Group'}</h1>
-                                <p>${settings.hospitalTagline || 'Healthcare Excellence'}</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
+        document.addEventListener('DOMContentLoaded', async () => {
+            await slideshowPlayer.init();
             
-            slideshowPlayer.init();
-            
-            // Request fullscreen on first user interaction
             document.addEventListener('click', () => {
                 const container = document.getElementById('slideshowContainer');
                 if (container.requestFullscreen) {
-                    container.requestFullscreen();
+                    container.requestFullscreen().catch(err => console.log('Fullscreen:', err));
                 } else if (container.webkitRequestFullscreen) {
                     container.webkitRequestFullscreen();
-                } else if (container.msRequestFullscreen) {
-                    container.msRequestFullscreen();
                 }
             }, { once: true });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (e.key === 'ArrowRight') {
+                    const slideElements = document.querySelectorAll('.slide');
+                    const dotElements = document.querySelectorAll('.pagination-dots .dot');
+                    
+                    slideElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    
+                    slideshowPlayer.currentSlideIndex = (slideshowPlayer.currentSlideIndex + 1) % slideshowPlayer.slides.length;
+                    
+                    slideElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
+                } else if (e.key === 'ArrowLeft') {
+                    const slideElements = document.querySelectorAll('.slide');
+                    const dotElements = document.querySelectorAll('.pagination-dots .dot');
+                    
+                    slideElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    
+                    slideshowPlayer.currentSlideIndex = (slideshowPlayer.currentSlideIndex - 1 + slideshowPlayer.slides.length) % slideshowPlayer.slides.length;
+                    
+                    slideElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
+                }
+            });
         });
     </script>
 </body>

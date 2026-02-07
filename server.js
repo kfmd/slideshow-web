@@ -170,6 +170,7 @@ app.get('/api/slideshows/active', async (req, res) => {
         const formattedSlideshows = slideshows.map(s => ({
             id: s.id,
             title: s.title,
+            description: s.description,  // FIXED: Include description for subtitle
             images: s.image_ids ? s.image_ids.split(',').map((id, idx) => ({
                 id: parseInt(id),
                 url: '/assets/images/uploads/' + path.basename(s.image_paths.split(',')[idx]),
@@ -226,16 +227,47 @@ app.post('/api/slideshows', upload.array('images'), async (req, res) => {
 // Update slideshow
 app.put('/api/slideshows/:id', upload.array('images'), async (req, res) => {
     try {
-        const { title, description, status } = req.body;
+        const { title, description, status, deletedImageIds } = req.body;
         
+        // Update slideshow metadata
         await runQuery(
             'UPDATE slideshows SET title = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [title, description, status, req.params.id]
         );
         
+        // Handle deleted images
+        if (deletedImageIds) {
+            const idsToDelete = JSON.parse(deletedImageIds);
+            console.log('Deleting images with IDs:', idsToDelete);
+            
+            for (const imageId of idsToDelete) {
+                // Get file path before deleting from database
+                const image = await getOne('SELECT file_path FROM images WHERE id = ?', [imageId]);
+                
+                if (image && image.file_path) {
+                    // Delete physical file
+                    if (fs.existsSync(image.file_path)) {
+                        fs.unlinkSync(image.file_path);
+                        console.log('Deleted file:', image.file_path);
+                    }
+                    
+                    // Delete from database
+                    await runQuery('DELETE FROM images WHERE id = ?', [imageId]);
+                    console.log('Deleted image record:', imageId);
+                }
+            }
+        }
+        
         // Handle new images if uploaded
         if (req.files && req.files.length > 0) {
             const captions = JSON.parse(req.body.captions || '[]');
+            
+            // Get current max display_order
+            const maxOrder = await getOne(
+                'SELECT COALESCE(MAX(display_order), -1) as max_order FROM images WHERE slideshow_id = ?',
+                [req.params.id]
+            );
+            const startOrder = (maxOrder?.max_order ?? -1) + 1;
             
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
@@ -248,7 +280,7 @@ app.put('/api/slideshows/:id', upload.array('images'), async (req, res) => {
                         file.path,
                         file.size,
                         file.mimetype,
-                        i
+                        startOrder + i
                     ]
                 );
             }
@@ -256,6 +288,7 @@ app.put('/api/slideshows/:id', upload.array('images'), async (req, res) => {
         
         res.json({ success: true });
     } catch (error) {
+        console.error('Update slideshow error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });

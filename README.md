@@ -1,49 +1,58 @@
 # 🏥 RSU Islam Group - Digital Signage System
 
-**Complete Full-Stack Web Application with ALL 7 Fixes Integrated**
+**Complete Full-Stack Slideshow Web Application**
 
 A professional digital signage system for hospitals with database persistence, file uploads, drag-drop reordering, and hot reload development.
 
+Developed by KFMD
+🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
 ---
 
-## ✅ ALL 7 FIXES IMPLEMENTED
+## FEATURES
 
-### Fix #1: ✅ Persistent Database Storage
-- **SQLite database** replaces localStorage
+### ✅ Persistent Database Storage
+
+- **SQLite database**
 - Data persists across app updates
 - Create/edit slides without data loss
 - Professional database schema with foreign keys
 
 ### Fix #2: ✅ File Upload to `assets/images/uploads/`
+
 - Images uploaded to proper directory
 - Multer handles file processing
 - Automatic filename generation
 - 10MB file size limit
 
-### Fix #3: ✅ Sample Images Included
+### ✅ Sample Images Included
+
 - 4 sample images: `circ-1.jpg`, `circ-2.jpg`, `hc-1.jpg`, `hc-2.jpg`
 - Sample data SQL script provided
 - Ready-to-use slideshow examples
 
-### Fix #4: ✅ Placeholder Image Fallback
+### ✅ Placeholder Image Fallback
+
 - `placeholder.jpg` used when images not found
 - `onerror` handlers on all images
 - Graceful degradation
 - No broken image icons
 
-### Fix #5: ✅ Docker Hot Reload
+### ✅ Docker Hot Reload
+
 - Nodemon watches for file changes
 - Volume mounting for live updates
 - Edit code → see changes immediately
 - No container rebuilds needed
 
-### Fix #6: ✅ Drag-Drop Image Reordering
+### ✅ Drag-Drop Image Reordering
+
 - Drag images to rearrange order
 - Visual feedback during drag
 - Smooth animations
 - Touch-friendly
 
-### Fix #7: ✅ Gradient Fade on Collapsed Text
+### ✅ Gradient Fade on Collapsed Text
+
 - Beautiful white gradient fade
 - Professional appearance
 - Smooth text transitions
@@ -59,6 +68,7 @@ rsu-slideshow-webapp/
 ├── slideshow.html          ← Display page
 ├── server.js               ← Express API server
 ├── package.json            ← Dependencies
+├── load-sample-data.js     ← If you want to load sample data to database using node 
 ├── Dockerfile              ← Docker image
 ├── docker-compose.yml      ← Hot reload config
 │
@@ -129,7 +139,9 @@ npm start
 ## 📊 Database Setup
 
 ### Automatic Initialization
+
 Database creates automatically on first run with:
+
 - Default admin user (username: `admin`, password: `admin123`)
 - Empty slideshows table
 - Activity logs
@@ -151,73 +163,6 @@ exit
 
 ```bash
 npm run init-db
-```
-
----
-
-## 🎯 Features Showcase
-
-### 1. Persistent Database (Fix #1)
-```javascript
-// Old (localStorage - data lost on updates)
-localStorage.setItem('slideshows', JSON.stringify(data));
-
-// New (SQLite - permanent storage)
-await fetch('/api/slideshows', { 
-    method: 'POST', 
-    body: formData 
-});
-```
-
-### 2. File Upload (Fix #2)
-```javascript
-// Files saved to: assets/images/uploads/
-// Format: [timestamp]-[random].jpg
-// Example: 1707234567890-123456789.jpg
-```
-
-### 3. Sample Images (Fix #3)
-```
-✓ circ-1.jpg (284KB) - Circumcision services
-✓ circ-2.jpg (337KB) - Modern circumcision method
-✓ hc-1.jpg (175KB) - Homecare advertisement
-✓ hc-2.jpg (167KB) - Homecare services
-✓ placeholder.jpg (7KB) - Fallback image
-```
-
-### 4. Placeholder Fallback (Fix #4)
-```html
-<img src="image.jpg" 
-     onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'">
-```
-
-### 5. Hot Reload (Fix #5)
-```yaml
-# docker-compose.yml
-volumes:
-  - .:/app              # Mount code
-  - /app/node_modules   # Exclude node_modules
-command: npm run dev    # Use nodemon
-```
-
-### 6. Drag-Drop Reordering (Fix #6)
-```javascript
-// Drag image to reorder
-handleDragStart(e) → handleDragOver(e) → handleDrop(e)
-// Array reordered automatically
-// UI updates instantly
-```
-
-### 7. Gradient Fade (Fix #7)
-```css
-.expandable-text.collapsed::before {
-    background: linear-gradient(
-        to bottom, 
-        transparent 0%, 
-        white 70%, 
-        white 100%
-    );
-}
 ```
 
 ---
@@ -249,21 +194,22 @@ handleDragStart(e) → handleDragOver(e) → handleDrop(e)
 
 1. Click **"▶ Start Slideshow"** or
 2. Open `http://localhost:3000/slideshow.html`
-3. Images with gradient captions (Fix #7!)
-4. Placeholder shows if image missing (Fix #4!)
-5. Auto-advance based on settings
+3. Auto-advance based on settings
 
 ---
 
 ## ⚙️ Configuration
 
 ### Slideshow Timing
+
 Settings → Slideshow Timing → Set seconds (1-60)
 
 ### Hospital Branding
+
 Settings → Hospital Name/Tagline → Customize text
 
 ### Site Logo
+
 Settings → Upload Logo → Shows in slideshow + favicon
 
 ---
@@ -320,6 +266,7 @@ docker-compose up
 ## 🐛 Troubleshooting
 
 ### Images Not Loading
+
 ```bash
 # Check uploads directory exists
 ls -la assets/images/uploads/
@@ -332,6 +279,7 @@ sqlite3 database/rsu_slideshow.db "SELECT * FROM images;"
 ```
 
 ### Database Issues
+
 ```bash
 # Reset database
 rm database/rsu_slideshow.db
@@ -345,6 +293,7 @@ docker-compose exec rsu-slideshow sh -c \
 ```
 
 ### Hot Reload Not Working
+
 ```bash
 # Check volumes are mounted
 docker-compose ps
@@ -411,6 +360,7 @@ docker-compose up -d --build
 ## 📞 Support
 
 **Default Login:**
+
 - Username: `admin`
 - Password: `admin123`
 
@@ -434,6 +384,6 @@ docker-compose up -d --build
 
 ---
 
-**Version:** 3.0.0 - Complete with All 7 Fixes
-**Date:** February 2024
+**Version:** 2.1.0
+**Date:** February 2026
 **Status:** ✅ Production Ready
