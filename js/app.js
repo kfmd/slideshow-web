@@ -385,21 +385,35 @@ const app = {
     },
 
     handleDragStart(e) {
-        e.target.classList.add('dragging');
+        const preview = e.target.closest('.image-preview');
+        if (!preview) return;
+        
+        preview.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('index', e.target.dataset.index);
+        e.dataTransfer.setData('text/plain', preview.dataset.index);
+        this.draggedIndex = parseInt(preview.dataset.index);
+        
+        console.log('Drag started from index:', this.draggedIndex);
     },
 
     handleDragEnd(e) {
-        e.target.classList.remove('dragging');
+        const preview = e.target.closest('.image-preview');
+        if (preview) preview.classList.remove('dragging');
         document.querySelectorAll('.image-preview').forEach(el => el.classList.remove('drag-over'));
+        this.draggedIndex = null;
     },
 
     handleDragOver(e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
+        
         const target = e.target.closest('.image-preview');
-        if (target) target.classList.add('drag-over');
+        if (target && !target.classList.contains('dragging')) {
+            document.querySelectorAll('.image-preview').forEach(el => {
+                if (el !== target) el.classList.remove('drag-over');
+            });
+            target.classList.add('drag-over');
+        }
         return false;
     },
 
@@ -412,27 +426,59 @@ const app = {
         e.stopPropagation();
         e.preventDefault();
         
-        const fromIndex = parseInt(e.dataTransfer.getData('index'));
+        const fromIndex = this.draggedIndex;
         const toElement = e.target.closest('.image-preview');
         
-        if (toElement) {
-            const toIndex = parseInt(toElement.dataset.index);
-            
-            if (fromIndex !== toIndex) {
-                // Reorder preview images
-                const [movedImage] = this.selectedImages.splice(fromIndex, 1);
-                this.selectedImages.splice(toIndex, 0, movedImage);
-                
-                // CRITICAL: Also reorder actual files
-                if (this.selectedFiles.length > fromIndex) {
-                    const [movedFile] = this.selectedFiles.splice(fromIndex, 1);
-                    this.selectedFiles.splice(toIndex, 0, movedFile);
-                }
-                
-                this.renderImagePreviews();
-            }
+        if (!toElement || fromIndex === null) {
+            console.log('Invalid drop target');
+            return false;
         }
         
+        const toIndex = parseInt(toElement.dataset.index);
+        
+        console.log(`Drag from ${fromIndex} to ${toIndex}`);
+        console.log('Before - Images:', this.selectedImages.map((img, i) => `${i}: ${img.caption || 'no-caption'}`));
+        
+        if (fromIndex === toIndex || isNaN(fromIndex) || isNaN(toIndex)) {
+            console.log('Same position or invalid indices');
+            return false;
+        }
+        
+        // STEP 1: Create a map of which images have File objects (new uploads)
+        // Store the actual File object with each image temporarily
+        const imageFileMap = new Map();
+        let fileIdx = 0;
+        
+        this.selectedImages.forEach((img, imgIdx) => {
+            if (!img.id && fileIdx < this.selectedFiles.length) {
+                // This is a new upload, map it to its file
+                imageFileMap.set(img, this.selectedFiles[fileIdx]);
+                fileIdx++;
+            }
+        });
+        
+        console.log('Image-File map size:', imageFileMap.size);
+        
+        // STEP 2: Reorder selectedImages
+        const [movedImage] = this.selectedImages.splice(fromIndex, 1);
+        this.selectedImages.splice(toIndex, 0, movedImage);
+        
+        console.log('After move - Images:', this.selectedImages.map((img, i) => `${i}: ${img.caption || 'no-caption'}`));
+        
+        // STEP 3: Rebuild selectedFiles array in the new order
+        this.selectedFiles = [];
+        this.selectedImages.forEach(img => {
+            if (imageFileMap.has(img)) {
+                this.selectedFiles.push(imageFileMap.get(img));
+            }
+        });
+        
+        console.log('Rebuilt selectedFiles, count:', this.selectedFiles.length);
+        
+        // STEP 4: Re-render
+        this.renderImagePreviews();
+        
+        document.querySelectorAll('.image-preview').forEach(el => el.classList.remove('drag-over'));
         return false;
     },
 
