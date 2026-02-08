@@ -13,11 +13,11 @@ Developed by KFMD
 
 ### Slideshow
 
-<video src="assets/slideshow-preview.mp4" width="300" controls></video>
+<video src="https://github.com/user-attachments/assets/e1b7f256-9ac8-40a6-9171-cc5f8c73f5b7" controls></video>
 
 ### Admin Panel
 
-<video src="assets/admin-panel-preview.mp4" width="300" controls></video>
+<video src="https://github.com/user-attachments/assets/fc96e8a5-a88d-443b-8164-289b8cd8a5dd" controls></video>
 
 ---
 
