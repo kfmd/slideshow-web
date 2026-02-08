@@ -6,6 +6,19 @@ A professional digital signage system for hospitals with database persistence, f
 
 Developed by KFMD
 🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
+
+---
+
+## PREVIEW
+
+### Slideshow
+
+<video src="assets/slideshow-preview.mp4" width="300" controls></video>
+
+### Admin Panel
+
+<video src="assets/admin-panel-preview.mp4" width="300" controls></video>
+
 ---
 
 ## FEATURES
