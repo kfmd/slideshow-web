@@ -42,6 +42,9 @@ Developed by KFMD
 - Title and subtitle font size configuration
 - Ability to show or hide pagination dots and hospital badge in settings
 
+![Updated Slideshow appearance](https://github.com/user-attachments/assets/9268ef9b-19e8-49b8-bbf7-fe829d14891f)
+![Admin Panel Advanced Settings](https://github.com/user-attachments/assets/7394b6e5-7ddd-402c-809d-8fc2466a9128)
+
 ## ALL FEATURES
 
 ### ✅ Persistent Database Storage
