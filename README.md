@@ -4,7 +4,6 @@
 
 A professional digital signage system for hospitals with database persistence, file uploads, drag-drop reordering, and hot reload development.
 
-<<<<<<< HEAD
 Developed by KFMD
 🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
 
@@ -20,8 +19,6 @@ Developed by KFMD
 
 <video src="https://github.com/user-attachments/assets/e1b7f256-9ac8-40a6-9171-cc5f8c73f5b7" controls></video>
 
-=======
->>>>>>> v2.4
 ---
 
 **Version:** 2.4.0
@@ -38,7 +35,7 @@ Developed by KFMD
 
 ## NEW FEATURES 2.4
 
-### Rounded corner, blurred background, pagination & badge toggle
+### 🆕 Rounded corner, blurred background, pagination & badge toggle
 
 - Ability toggle rounded corner in settings
 - blurred background with colored/black and white toggle
@@ -391,4 +388,5 @@ docker-compose up -d --build
 **Date:** February 2026
 **Status:** ✅ Production Ready
 =======
+>>>>>>>
 >>>>>>> v2.4
