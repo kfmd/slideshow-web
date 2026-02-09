@@ -385,35 +385,21 @@ const app = {
     },
 
     handleDragStart(e) {
-        const preview = e.target.closest('.image-preview');
-        if (!preview) return;
-        
-        preview.classList.add('dragging');
+        e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', preview.dataset.index);
-        this.draggedIndex = parseInt(preview.dataset.index);
-        
-        console.log('Drag started from index:', this.draggedIndex);
+        e.dataTransfer.setData('index', e.target.dataset.index);
     },
 
     handleDragEnd(e) {
-        const preview = e.target.closest('.image-preview');
-        if (preview) preview.classList.remove('dragging');
+        e.target.classList.remove('dragging');
         document.querySelectorAll('.image-preview').forEach(el => el.classList.remove('drag-over'));
-        this.draggedIndex = null;
     },
 
     handleDragOver(e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        
         const target = e.target.closest('.image-preview');
-        if (target && !target.classList.contains('dragging')) {
-            document.querySelectorAll('.image-preview').forEach(el => {
-                if (el !== target) el.classList.remove('drag-over');
-            });
-            target.classList.add('drag-over');
-        }
+        if (target) target.classList.add('drag-over');
         return false;
     },
 
@@ -426,59 +412,27 @@ const app = {
         e.stopPropagation();
         e.preventDefault();
         
-        const fromIndex = this.draggedIndex;
+        const fromIndex = parseInt(e.dataTransfer.getData('index'));
         const toElement = e.target.closest('.image-preview');
         
-        if (!toElement || fromIndex === null) {
-            console.log('Invalid drop target');
-            return false;
+        if (toElement) {
+            const toIndex = parseInt(toElement.dataset.index);
+            
+            if (fromIndex !== toIndex) {
+                // Reorder preview images
+                const [movedImage] = this.selectedImages.splice(fromIndex, 1);
+                this.selectedImages.splice(toIndex, 0, movedImage);
+                
+                // CRITICAL: Also reorder actual files
+                if (this.selectedFiles.length > fromIndex) {
+                    const [movedFile] = this.selectedFiles.splice(fromIndex, 1);
+                    this.selectedFiles.splice(toIndex, 0, movedFile);
+                }
+                
+                this.renderImagePreviews();
+            }
         }
         
-        const toIndex = parseInt(toElement.dataset.index);
-        
-        console.log(`Drag from ${fromIndex} to ${toIndex}`);
-        console.log('Before - Images:', this.selectedImages.map((img, i) => `${i}: ${img.caption || 'no-caption'}`));
-        
-        if (fromIndex === toIndex || isNaN(fromIndex) || isNaN(toIndex)) {
-            console.log('Same position or invalid indices');
-            return false;
-        }
-        
-        // STEP 1: Create a map of which images have File objects (new uploads)
-        // Store the actual File object with each image temporarily
-        const imageFileMap = new Map();
-        let fileIdx = 0;
-        
-        this.selectedImages.forEach((img, imgIdx) => {
-            if (!img.id && fileIdx < this.selectedFiles.length) {
-                // This is a new upload, map it to its file
-                imageFileMap.set(img, this.selectedFiles[fileIdx]);
-                fileIdx++;
-            }
-        });
-        
-        console.log('Image-File map size:', imageFileMap.size);
-        
-        // STEP 2: Reorder selectedImages
-        const [movedImage] = this.selectedImages.splice(fromIndex, 1);
-        this.selectedImages.splice(toIndex, 0, movedImage);
-        
-        console.log('After move - Images:', this.selectedImages.map((img, i) => `${i}: ${img.caption || 'no-caption'}`));
-        
-        // STEP 3: Rebuild selectedFiles array in the new order
-        this.selectedFiles = [];
-        this.selectedImages.forEach(img => {
-            if (imageFileMap.has(img)) {
-                this.selectedFiles.push(imageFileMap.get(img));
-            }
-        });
-        
-        console.log('Rebuilt selectedFiles, count:', this.selectedFiles.length);
-        
-        // STEP 4: Re-render
-        this.renderImagePreviews();
-        
-        document.querySelectorAll('.image-preview').forEach(el => el.classList.remove('drag-over'));
         return false;
     },
 
@@ -688,15 +642,6 @@ const app = {
                 return;
             }
             
-            // Store slideshow info for pagination
-            this.previewSlideshows = data.slideshows.map(s => ({
-                id: s.id,
-                title: s.title,
-                description: s.description,
-                imageCount: s.images.length
-            }));
-            
-            // Flatten all images
             const activeSlides = data.slideshows.flatMap(s => 
                 s.images.map(img => ({ 
                     ...img, 
@@ -731,14 +676,12 @@ const app = {
                 </div>
             `).join('');
             
-            // NEW: Create pagination dots per slideshow (not per image!)
-            paginationDots.innerHTML = this.previewSlideshows.map((slideshow, index) => 
-                `<div class="dot ${index === 0 ? 'active' : ''}" title="${slideshow.title}"></div>`
+            paginationDots.innerHTML = activeSlides.map((_, index) => 
+                `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
             ).join('');
 
             container.classList.add('active');
             this.currentSlideIndex = 0;
-            this.currentSlideshowIndex = 0;  // NEW: Track current slideshow
             this.isPaused = false;
             this.startSlideshow(activeSlides);
 
@@ -765,27 +708,13 @@ const app = {
                 const slideElements = document.querySelectorAll('.slide');
                 const dotElements = document.querySelectorAll('.pagination-dots .dot');
                 
-                // Hide current slide
                 slideElements[this.currentSlideIndex]?.classList.remove('active');
+                dotElements[this.currentSlideIndex]?.classList.remove('active');
                 
-                // Advance to next slide
                 this.currentSlideIndex = (this.currentSlideIndex + 1) % slides.length;
                 
-                // Show next slide
                 slideElements[this.currentSlideIndex]?.classList.add('active');
-                
-                // NEW: Update slideshow pagination dot
-                if (this.previewSlideshows && this.previewSlideshows.length > 0) {
-                    const currentSlide = slides[this.currentSlideIndex];
-                    const newSlideshowIndex = this.previewSlideshows.findIndex(s => s.id === currentSlide.slideshowId);
-                    
-                    if (newSlideshowIndex >= 0 && newSlideshowIndex !== this.currentSlideshowIndex) {
-                        // Changed slideshow, update pagination
-                        dotElements[this.currentSlideshowIndex]?.classList.remove('active');
-                        dotElements[newSlideshowIndex]?.classList.add('active');
-                        this.currentSlideshowIndex = newSlideshowIndex;
-                    }
-                }
+                dotElements[this.currentSlideIndex]?.classList.add('active');
             }
         }, timing);
     },
@@ -907,33 +836,17 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     });
 
-    document.getElementById('siteLogo').addEventListener('change', async (e) => {
+    document.getElementById('siteLogo').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            const formData = new FormData();
-            formData.append('logo', file);
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/settings/logo`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    app.settings.siteLogo = data.logoPath;
-                    document.getElementById('logoPreview').innerHTML = `
-                        <img src="${data.logoPath}" class="logo-preview" alt="Logo">
-                    `;
-                    app.saveSettings();
-                    alert('Logo uploaded successfully!');
-                } else {
-                    alert(data.message || 'Failed to upload logo');
-                }
-            } catch (error) {
-                console.error('Logo upload error:', error);
-                alert('Failed to upload logo');
-            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                app.settings.siteLogo = event.target.result;
+                document.getElementById('logoPreview').innerHTML = `
+                    <img src="${event.target.result}" class="logo-preview" alt="Logo">
+                `;
+            };
+            reader.readAsDataURL(file);
         }
     });
 
