@@ -29,10 +29,8 @@
     <script>
         const slideshowPlayer = {
             currentSlideIndex: 0,
-            currentSlideshowIndex: 0,  // NEW: Track current slideshow
             slideshowInterval: null,
             slides: [],
-            slideshows: [],  // NEW: Store slideshow info
             settings: {
                 slideshowTiming: 5,
                 siteLogo: null,
@@ -92,15 +90,7 @@
                     const data = await response.json();
                     
                     if (data.success && data.slideshows.length > 0) {
-                        // Store slideshow info for pagination
-                        this.slideshows = data.slideshows.map(s => ({
-                            id: s.id,
-                            title: s.title,
-                            description: s.description,
-                            imageCount: s.images.length
-                        }));
-                        
-                        // Flatten all images with slideshow metadata
+                        // FIXED: Use description, not title twice
                         this.slides = data.slideshows.flatMap(s => 
                             s.images.map(img => ({ 
                                 ...img, 
@@ -130,26 +120,14 @@
                 const storedSlideshows = localStorage.getItem('rsu_slideshows');
                 if (storedSlideshows) {
                     const slideshows = JSON.parse(storedSlideshows);
-                    const activeSlideshows = slideshows.filter(s => s.status === 'active');
-                    
-                    // Store slideshow info
-                    this.slideshows = activeSlideshows.map(s => ({
-                        id: s.id,
-                        title: s.title,
-                        description: s.description,
-                        imageCount: s.images.length
-                    }));
-                    
-                    // Flatten images
-                    this.slides = activeSlideshows.flatMap(s => 
-                        s.images.map(img => ({ 
+                    this.slides = slideshows
+                        .filter(s => s.status === 'active')
+                        .flatMap(s => s.images.map(img => ({ 
                             ...img, 
                             slideshowTitle: s.title, 
                             slideshowDescription: s.description || s.title,
                             slideshowId: s.id 
-                        }))
-                    );
-                    
+                        })));
                     this.renderSlides();
                 }
             },
@@ -171,14 +149,12 @@
                     return;
                 }
 
-                // Render all slides with blurred background
+                // FIXED: Show description in subtitle
                 wrapper.innerHTML = this.slides.map((slide, index) => `
                     <div class="slide ${index === 0 ? 'active' : ''}">
-                        <div class="slide-background" style="background-image: url('${slide.url}')"></div>
                         <img src="${slide.url}" 
                              onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
-                             alt="${slide.slideshowTitle}"
-                             class="slide-image">
+                             alt="${slide.slideshowTitle}">
                         <div class="slide-caption">
                             <h2>${slide.slideshowTitle}</h2>
                             <p>${slide.slideshowDescription}</p>
@@ -186,9 +162,8 @@
                     </div>
                 `).join('');
                 
-                // NEW: Create pagination dots per slideshow (not per image!)
-                paginationDots.innerHTML = this.slideshows.map((slideshow, index) => 
-                    `<div class="dot ${index === 0 ? 'active' : ''}" title="${slideshow.title}"></div>`
+                paginationDots.innerHTML = this.slides.map((_, index) => 
+                    `<div class="dot ${index === 0 ? 'active' : ''}"></div>`
                 ).join('');
             },
 
@@ -207,26 +182,13 @@
                         const dotElements = document.querySelectorAll('.pagination-dots .dot');
                         
                         if (slideElements.length > 0) {
-                            // Hide current slide
                             slideElements[this.currentSlideIndex]?.classList.remove('active');
+                            dotElements[this.currentSlideIndex]?.classList.remove('active');
                             
-                            // Advance to next slide
                             this.currentSlideIndex = (this.currentSlideIndex + 1) % this.slides.length;
                             
-                            // Show next slide
                             slideElements[this.currentSlideIndex]?.classList.add('active');
-                            
-                            // NEW: Update slideshow pagination dot
-                            // Determine which slideshow the current slide belongs to
-                            const currentSlide = this.slides[this.currentSlideIndex];
-                            const currentSlideshowIndex = this.slideshows.findIndex(s => s.id === currentSlide.slideshowId);
-                            
-                            if (currentSlideshowIndex !== this.currentSlideshowIndex) {
-                                // Changed slideshow, update pagination
-                                dotElements[this.currentSlideshowIndex]?.classList.remove('active');
-                                dotElements[currentSlideshowIndex]?.classList.add('active');
-                                this.currentSlideshowIndex = currentSlideshowIndex;
-                            }
+                            dotElements[this.currentSlideIndex]?.classList.add('active');
                         }
                     }
                 }, timing);
@@ -253,37 +215,23 @@
                     const dotElements = document.querySelectorAll('.pagination-dots .dot');
                     
                     slideElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
                     
                     slideshowPlayer.currentSlideIndex = (slideshowPlayer.currentSlideIndex + 1) % slideshowPlayer.slides.length;
                     
                     slideElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
-                    
-                    // Update slideshow pagination
-                    const currentSlide = slideshowPlayer.slides[slideshowPlayer.currentSlideIndex];
-                    const newSlideshowIndex = slideshowPlayer.slideshows.findIndex(s => s.id === currentSlide.slideshowId);
-                    if (newSlideshowIndex !== slideshowPlayer.currentSlideshowIndex) {
-                        dotElements[slideshowPlayer.currentSlideshowIndex]?.classList.remove('active');
-                        dotElements[newSlideshowIndex]?.classList.add('active');
-                        slideshowPlayer.currentSlideshowIndex = newSlideshowIndex;
-                    }
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
                 } else if (e.key === 'ArrowLeft') {
                     const slideElements = document.querySelectorAll('.slide');
                     const dotElements = document.querySelectorAll('.pagination-dots .dot');
                     
                     slideElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.remove('active');
                     
                     slideshowPlayer.currentSlideIndex = (slideshowPlayer.currentSlideIndex - 1 + slideshowPlayer.slides.length) % slideshowPlayer.slides.length;
                     
                     slideElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
-                    
-                    // Update slideshow pagination
-                    const currentSlide = slideshowPlayer.slides[slideshowPlayer.currentSlideIndex];
-                    const newSlideshowIndex = slideshowPlayer.slideshows.findIndex(s => s.id === currentSlide.slideshowId);
-                    if (newSlideshowIndex !== slideshowPlayer.currentSlideshowIndex) {
-                        dotElements[slideshowPlayer.currentSlideshowIndex]?.classList.remove('active');
-                        dotElements[newSlideshowIndex]?.classList.add('active');
-                        slideshowPlayer.currentSlideshowIndex = newSlideshowIndex;
-                    }
+                    dotElements[slideshowPlayer.currentSlideIndex]?.classList.add('active');
                 }
             });
         });

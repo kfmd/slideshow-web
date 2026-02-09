@@ -721,11 +721,9 @@ const app = {
             
             wrapper.innerHTML = activeSlides.map((slide, index) => `
                 <div class="slide ${index === 0 ? 'active' : ''}">
-                    <div class="slide-background" style="background-image: url('${slide.url}')"></div>
                     <img src="${slide.url}" 
                          onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
-                         alt="${slide.slideshowTitle}"
-                         class="slide-image">
+                         alt="${slide.slideshowTitle}">
                     <div class="slide-caption">
                         <h2>${slide.slideshowTitle}</h2>
                         <p>${slide.slideshowDescription}</p>
