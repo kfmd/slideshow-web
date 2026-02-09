@@ -170,6 +170,59 @@
                             <input type="text" id="hospitalTagline" value="Healthcare Excellence" required>
                         </div>
                         
+                        <!-- Advanced Display Settings -->
+                        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--text-dark); font-size: 1.125rem;">Advanced Display Settings</h3>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="roundedImageEdges" checked>
+                                    <span>Rounded Image Edges</span>
+                                </label>
+                                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">Display slideshow images with rounded corners</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="coloredBlurBackground" checked>
+                                    <span>Colored Blur Background</span>
+                                </label>
+                                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">Use colored blur background (uncheck for grayscale)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Title Font Size</label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <input type="range" id="titleFontSize" min="20" max="80" value="40" style="flex: 1;">
+                                    <span id="titleFontSizeValue" style="min-width: 50px; font-weight: 600;">40px</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Subtitle Font Size</label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <input type="range" id="subtitleFontSize" min="12" max="40" value="20" style="flex: 1;">
+                                    <span id="subtitleFontSizeValue" style="min-width: 50px; font-weight: 600;">20px</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showPaginationDots" checked>
+                                    <span>Show Pagination Dots</span>
+                                </label>
+                                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">Display slideshow navigation dots at the bottom</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showHospitalBadge" checked>
+                                    <span>Show Hospital Badge</span>
+                                </label>
+                                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">Display hospital name and logo badge at the top</small>
+                            </div>
+                        </div>
+                        
                         <button type="submit" class="btn btn-primary">Save Settings</button>
                     </form>
                 </div>

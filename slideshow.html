@@ -37,7 +37,14 @@
                 slideshowTiming: 5,
                 siteLogo: null,
                 hospitalName: 'RSU Islam Group',
-                hospitalTagline: 'Ramah, Amanah, Profesional, Islami (RAPI)'
+                hospitalTagline: 'Ramah, Amanah, Profesional, Islami (RAPI)',
+                // NEW: Advanced display settings
+                roundedImageEdges: true,
+                coloredBlurBackground: true,
+                titleFontSize: 40,
+                subtitleFontSize: 20,
+                showPaginationDots: true,
+                showHospitalBadge: true
             },
 
             async init() {
@@ -65,7 +72,11 @@
 
             applySettings() {
                 const badge = document.querySelector('.hospital-badge');
+                const paginationDots = document.getElementById('paginationDots');
+                
+                // Apply hospital badge visibility
                 if (badge) {
+                    badge.style.display = this.settings.showHospitalBadge !== false ? 'flex' : 'none';
                     badge.innerHTML = `
                         ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo" style="width: 50px; height: 50px; object-fit: contain; flex-shrink: 0;">` : ''}
                         <div>
@@ -75,6 +86,41 @@
                     `;
                 }
                 
+                // Apply pagination dots visibility
+                if (paginationDots) {
+                    paginationDots.style.display = this.settings.showPaginationDots !== false ? 'flex' : 'none';
+                }
+                
+                // Apply dynamic CSS for advanced settings
+                let styleEl = document.getElementById('dynamic-settings-style');
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = 'dynamic-settings-style';
+                    document.head.appendChild(styleEl);
+                }
+                
+                const titleSize = this.settings.titleFontSize || 40;
+                const subtitleSize = this.settings.subtitleFontSize || 20;
+                const roundedEdges = this.settings.roundedImageEdges !== false;
+                const coloredBackground = this.settings.coloredBlurBackground !== false;
+                
+                styleEl.textContent = `
+                    .slide-caption h2 {
+                        font-size: ${titleSize}px !important;
+                    }
+                    .slide-caption p {
+                        font-size: ${subtitleSize}px !important;
+                    }
+                    .slide img,
+                    .slide-image {
+                        border-radius: ${roundedEdges ? '20px' : '0'} !important;
+                    }
+                    .slide-background {
+                        filter: blur(40px) brightness(0.7) ${!coloredBackground ? 'grayscale(100%)' : ''} !important;
+                    }
+                `;
+                
+                // Apply favicon
                 if (this.settings.siteLogo) {
                     let favicon = document.querySelector('link[rel="icon"]');
                     if (!favicon) {
@@ -171,12 +217,18 @@
                     return;
                 }
 
+<<<<<<< HEAD
                 // Render all slides
+=======
+                // Render all slides with blurred background
+>>>>>>> v2.4
                 wrapper.innerHTML = this.slides.map((slide, index) => `
                     <div class="slide ${index === 0 ? 'active' : ''}">
+                        <div class="slide-background" style="background-image: url('${slide.url}')"></div>
                         <img src="${slide.url}" 
                              onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
-                             alt="${slide.slideshowTitle}">
+                             alt="${slide.slideshowTitle}"
+                             class="slide-image">
                         <div class="slide-caption">
                             <h2>${slide.slideshowTitle}</h2>
                             <p>${slide.slideshowDescription}</p>

@@ -9,7 +9,14 @@ const app = {
         slideshowTiming: 5,
         siteLogo: null,
         hospitalName: 'RSU Islam Group',
-        hospitalTagline: 'Healthcare Excellence'
+        hospitalTagline: 'Healthcare Excellence',
+        // NEW: Advanced display settings
+        roundedImageEdges: true,
+        coloredBlurBackground: true,
+        titleFontSize: 40,
+        subtitleFontSize: 20,
+        showPaginationDots: true,
+        showHospitalBadge: true
     },
     currentView: 'dashboard',
     selectedImages: [],     // For preview (base64 for display)
@@ -661,6 +668,18 @@ const app = {
         document.getElementById('hospitalName').value = this.settings.hospitalName;
         document.getElementById('hospitalTagline').value = this.settings.hospitalTagline;
         
+        // NEW: Load advanced settings
+        document.getElementById('roundedImageEdges').checked = this.settings.roundedImageEdges !== false;
+        document.getElementById('coloredBlurBackground').checked = this.settings.coloredBlurBackground !== false;
+        document.getElementById('titleFontSize').value = this.settings.titleFontSize || 40;
+        document.getElementById('subtitleFontSize').value = this.settings.subtitleFontSize || 20;
+        document.getElementById('showPaginationDots').checked = this.settings.showPaginationDots !== false;
+        document.getElementById('showHospitalBadge').checked = this.settings.showHospitalBadge !== false;
+        
+        // Update font size display
+        document.getElementById('titleFontSizeValue').textContent = this.settings.titleFontSize || 40;
+        document.getElementById('subtitleFontSizeValue').textContent = this.settings.subtitleFontSize || 20;
+        
         if (this.settings.siteLogo) {
             document.getElementById('logoPreview').innerHTML = `
                 <img src="${this.settings.siteLogo}" class="logo-preview" alt="Site Logo">
@@ -668,11 +687,22 @@ const app = {
         }
     },
 
-    saveGeneralSettings(timing, logo, hospitalName, hospitalTagline) {
+    saveGeneralSettings(timing, logo, hospitalName, hospitalTagline, advancedSettings) {
         this.settings.slideshowTiming = parseInt(timing);
         this.settings.hospitalName = hospitalName;
         this.settings.hospitalTagline = hospitalTagline;
         if (logo) this.settings.siteLogo = logo;
+        
+        // NEW: Save advanced settings
+        if (advancedSettings) {
+            this.settings.roundedImageEdges = advancedSettings.roundedImageEdges;
+            this.settings.coloredBlurBackground = advancedSettings.coloredBlurBackground;
+            this.settings.titleFontSize = parseInt(advancedSettings.titleFontSize);
+            this.settings.subtitleFontSize = parseInt(advancedSettings.subtitleFontSize);
+            this.settings.showPaginationDots = advancedSettings.showPaginationDots;
+            this.settings.showHospitalBadge = advancedSettings.showHospitalBadge;
+        }
+        
         this.saveSettings();
         this.applySettings();
         alert('Settings saved successfully!');
@@ -711,6 +741,7 @@ const app = {
             const paginationDots = document.getElementById('paginationDots');
             
             const badge = container.querySelector('.hospital-badge');
+            badge.style.display = this.settings.showHospitalBadge !== false ? 'flex' : 'none';
             badge.innerHTML = `
                 ${this.settings.siteLogo ? `<img src="${this.settings.siteLogo}" alt="Logo">` : ''}
                 <div>
@@ -721,9 +752,11 @@ const app = {
             
             wrapper.innerHTML = activeSlides.map((slide, index) => `
                 <div class="slide ${index === 0 ? 'active' : ''}">
+                    <div class="slide-background" style="background-image: url('${slide.url}')"></div>
                     <img src="${slide.url}" 
                          onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg'"
-                         alt="${slide.slideshowTitle}">
+                         alt="${slide.slideshowTitle}"
+                         class="slide-image">
                     <div class="slide-caption">
                         <h2>${slide.slideshowTitle}</h2>
                         <p>${slide.slideshowDescription}</p>
@@ -735,6 +768,38 @@ const app = {
             paginationDots.innerHTML = this.previewSlideshows.map((slideshow, index) => 
                 `<div class="dot ${index === 0 ? 'active' : ''}" title="${slideshow.title}"></div>`
             ).join('');
+            
+            // Apply pagination visibility
+            paginationDots.style.display = this.settings.showPaginationDots !== false ? 'flex' : 'none';
+            
+            // Apply dynamic CSS settings to preview
+            let styleEl = document.getElementById('preview-dynamic-settings-style');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'preview-dynamic-settings-style';
+                document.head.appendChild(styleEl);
+            }
+            
+            const titleSize = this.settings.titleFontSize || 40;
+            const subtitleSize = this.settings.subtitleFontSize || 20;
+            const roundedEdges = this.settings.roundedImageEdges !== false;
+            const coloredBackground = this.settings.coloredBlurBackground !== false;
+            
+            styleEl.textContent = `
+                #slideshowContainer .slide-caption h2 {
+                    font-size: ${titleSize}px !important;
+                }
+                #slideshowContainer .slide-caption p {
+                    font-size: ${subtitleSize}px !important;
+                }
+                #slideshowContainer .slide img,
+                #slideshowContainer .slide-image {
+                    border-radius: ${roundedEdges ? '20px' : '0'} !important;
+                }
+                #slideshowContainer .slide-background {
+                    filter: blur(40px) brightness(0.7) ${!coloredBackground ? 'grayscale(100%)' : ''} !important;
+                }
+            `;
 
             container.classList.add('active');
             this.currentSlideIndex = 0;
@@ -899,25 +964,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('settingsForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        
+        // Collect advanced settings
+        const advancedSettings = {
+            roundedImageEdges: document.getElementById('roundedImageEdges').checked,
+            coloredBlurBackground: document.getElementById('coloredBlurBackground').checked,
+            titleFontSize: document.getElementById('titleFontSize').value,
+            subtitleFontSize: document.getElementById('subtitleFontSize').value,
+            showPaginationDots: document.getElementById('showPaginationDots').checked,
+            showHospitalBadge: document.getElementById('showHospitalBadge').checked
+        };
+        
         app.saveGeneralSettings(
             document.getElementById('slideshowTiming').value,
             app.settings.siteLogo,
             document.getElementById('hospitalName').value,
-            document.getElementById('hospitalTagline').value
+            document.getElementById('hospitalTagline').value,
+            advancedSettings
         );
     });
 
-    document.getElementById('siteLogo').addEventListener('change', (e) => {
+    document.getElementById('siteLogo').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                app.settings.siteLogo = event.target.result;
-                document.getElementById('logoPreview').innerHTML = `
-                    <img src="${event.target.result}" class="logo-preview" alt="Logo">
-                `;
-            };
-            reader.readAsDataURL(file);
+            const formData = new FormData();
+            formData.append('logo', file);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/settings/logo`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    app.settings.siteLogo = data.logoPath;
+                    document.getElementById('logoPreview').innerHTML = `
+                        <img src="${data.logoPath}" class="logo-preview" alt="Logo">
+                    `;
+                    app.saveSettings();
+                    alert('Logo uploaded successfully!');
+                } else {
+                    alert(data.message || 'Failed to upload logo');
+                }
+            } catch (error) {
+                console.error('Logo upload error:', error);
+                alert('Failed to upload logo');
+            }
         }
     });
 
@@ -936,6 +1029,15 @@ document.addEventListener('DOMContentLoaded', () => {
             app.changePassword(newPassword);
         });
     }
+    
+    // Font size slider event listeners
+    document.getElementById('titleFontSize').addEventListener('input', (e) => {
+        document.getElementById('titleFontSizeValue').textContent = e.target.value + 'px';
+    });
+    
+    document.getElementById('subtitleFontSize').addEventListener('input', (e) => {
+        document.getElementById('subtitleFontSizeValue').textContent = e.target.value + 'px';
+    });
 
     app.init();
 });

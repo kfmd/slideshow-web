@@ -4,6 +4,7 @@
 
 A professional digital signage system for hospitals with database persistence, file uploads, drag-drop reordering, and hot reload development.
 
+<<<<<<< HEAD
 Developed by KFMD
 🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
 
@@ -19,9 +20,32 @@ Developed by KFMD
 
 <video src="https://github.com/user-attachments/assets/e1b7f256-9ac8-40a6-9171-cc5f8c73f5b7" controls></video>
 
+=======
+>>>>>>> v2.4
 ---
 
-## FEATURES
+**Version:** 2.4.0
+**Date:** February 2026
+**Status:** ✅ Production Ready
+
+---
+
+#### Developed by KFMD
+
+🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
+
+---
+
+## NEW FEATURES 2.4
+
+### Rounded corner, blurred background, pagination & badge toggle
+
+- Ability toggle rounded corner in settings
+- blurred background with colored/black and white toggle
+- Title and subtitle font size configuration
+- Ability to show or hide pagination dots and hospital badge in settings
+
+## ALL FEATURES
 
 ### ✅ Persistent Database Storage
 
@@ -257,24 +281,6 @@ docker-compose up
 
 ---
 
-## 📝 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/login` | Authenticate user |
-| GET | `/api/slideshows` | Get all slideshows |
-| GET | `/api/slideshows/active` | Get active slideshows |
-| POST | `/api/slideshows` | Create slideshow (with files) |
-| PUT | `/api/slideshows/:id` | Update slideshow |
-| DELETE | `/api/slideshows/:id` | Delete slideshow |
-| POST | `/api/slideshows/:id/display` | Increment display count |
-| GET | `/api/users` | Get all users |
-| POST | `/api/users` | Create user |
-| DELETE | `/api/users/:id` | Delete user |
-| GET | `/api/dashboard/stats` | Get statistics |
-
----
-
 ## 🐛 Troubleshooting
 
 ### Images Not Loading
@@ -379,7 +385,10 @@ docker-compose up -d --build
 **Change password in Users section!**
 
 ---
+<<<<<<< HEAD
 
 **Version:** 2.1
 **Date:** February 2026
 **Status:** ✅ Production Ready
+=======
+>>>>>>> v2.4

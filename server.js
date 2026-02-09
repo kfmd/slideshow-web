@@ -35,9 +35,9 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp/;
+        const allowedTypes = /jpeg|jpg|png|gif|webp|svg/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'image/svg+xml';
         
         if (mimetype && extname) {
             return cb(null, true);
@@ -344,6 +344,50 @@ app.get('/api/dashboard/stats', async (req, res) => {
             }
         });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Logo upload endpoint
+app.post('/api/settings/logo', upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+        
+        // Delete old logo if it exists
+        const logoPattern = /^logo-\d+-\d+\.(jpg|jpeg|png|gif|webp|svg)$/;
+        const files = fs.readdirSync(uploadsDir);
+        
+        files.forEach(file => {
+            if (logoPattern.test(file)) {
+                const oldLogoPath = path.join(uploadsDir, file);
+                if (fs.existsSync(oldLogoPath)) {
+                    fs.unlinkSync(oldLogoPath);
+                    console.log('Deleted old logo:', oldLogoPath);
+                }
+            }
+        });
+        
+        // Rename uploaded file to follow logo pattern
+        const timestamp = Date.now();
+        const random = Math.round(Math.random() * 1E9);
+        const ext = path.extname(req.file.originalname);
+        const newFilename = `logo-${timestamp}-${random}${ext}`;
+        const oldPath = req.file.path;
+        const newPath = path.join(uploadsDir, newFilename);
+        
+        fs.renameSync(oldPath, newPath);
+        
+        const logoPath = `/assets/images/uploads/${newFilename}`;
+        
+        res.json({ 
+            success: true, 
+            logoPath: logoPath,
+            message: 'Logo uploaded successfully'
+        });
+    } catch (error) {
+        console.error('Logo upload error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
