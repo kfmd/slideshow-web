@@ -4,11 +4,30 @@
 
 A professional digital signage system for hospitals with database persistence, file uploads, drag-drop reordering, and hot reload development.
 
-Developed by KFMD
-🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
 ---
 
-## FEATURES
+**Version:** 2.4.0
+**Date:** February 2026
+**Status:** ✅ Production Ready
+
+---
+
+#### Developed by KFMD
+
+🌐 [Notion](https://kfmd.notion.site/) 🌐 [GitHub](https://github.com/kfmd)
+
+---
+
+## NEW FEATURES 2.4
+
+### Rounded corner, blurred background, pagination & badge toggle
+
+- Ability toggle rounded corner in settings
+- blurred background with colored/black and white toggle
+- Title and subtitle font size configuration
+- Ability to show or hide pagination dots and hospital badge in settings
+
+## ALL FEATURES
 
 ### ✅ Persistent Database Storage
 
@@ -245,24 +264,6 @@ docker-compose up
 
 ---
 
-## 📝 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/login` | Authenticate user |
-| GET | `/api/slideshows` | Get all slideshows |
-| GET | `/api/slideshows/active` | Get active slideshows |
-| POST | `/api/slideshows` | Create slideshow (with files) |
-| PUT | `/api/slideshows/:id` | Update slideshow |
-| DELETE | `/api/slideshows/:id` | Delete slideshow |
-| POST | `/api/slideshows/:id/display` | Increment display count |
-| GET | `/api/users` | Get all users |
-| POST | `/api/users` | Create user |
-| DELETE | `/api/users/:id` | Delete user |
-| GET | `/api/dashboard/stats` | Get statistics |
-
----
-
 ## 🐛 Troubleshooting
 
 ### Images Not Loading
@@ -367,23 +368,3 @@ docker-compose up -d --build
 **Change password in Users section!**
 
 ---
-
-## 🎯 Summary of ALL 7 Fixes
-
-| # | Fix | Status | Benefit |
-|---|-----|--------|---------|
-| 1 | Persistent Database | ✅ | Data never lost |
-| 2 | Upload to assets/images/uploads | ✅ | Proper file storage |
-| 3 | Sample images | ✅ | Ready to demo |
-| 4 | Placeholder fallback | ✅ | No broken images |
-| 5 | Docker hot reload | ✅ | Instant development |
-| 6 | Drag-drop reorder | ✅ | Easy image sorting |
-| 7 | Gradient fade | ✅ | Beautiful UI |
-
-**All features working and production-ready!** 🚀
-
----
-
-**Version:** 2.1.0
-**Date:** February 2026
-**Status:** ✅ Production Ready
