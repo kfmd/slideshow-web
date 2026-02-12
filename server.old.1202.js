@@ -348,61 +348,6 @@ app.get('/api/dashboard/stats', async (req, res) => {
     }
 });
 
-// Get all settings
-app.get('/api/settings', async (req, res) => {
-    try {
-        const settings = await getAll('SELECT setting_key, setting_value FROM settings');
-        
-        // Convert array of settings to object
-        const settingsObj = {};
-        settings.forEach(setting => {
-            // Parse boolean strings
-            if (setting.setting_value === 'true') {
-                settingsObj[setting.setting_key] = true;
-            } else if (setting.setting_value === 'false') {
-                settingsObj[setting.setting_key] = false;
-            } else if (!isNaN(setting.setting_value) && setting.setting_value !== null) {
-                // Parse numbers
-                settingsObj[setting.setting_key] = parseFloat(setting.setting_value);
-            } else {
-                settingsObj[setting.setting_key] = setting.setting_value;
-            }
-        });
-        
-        res.json({ success: true, settings: settingsObj });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Update settings
-app.post('/api/settings', async (req, res) => {
-    try {
-        const settings = req.body;
-        
-        // Update each setting
-        for (const [key, value] of Object.entries(settings)) {
-            // Convert value to string for storage
-            const stringValue = value === null ? null : String(value);
-            
-            // Update or insert setting
-            await runQuery(
-                `INSERT INTO settings (setting_key, setting_value, updated_at) 
-                 VALUES (?, ?, CURRENT_TIMESTAMP)
-                 ON CONFLICT(setting_key) DO UPDATE SET 
-                 setting_value = excluded.setting_value,
-                 updated_at = CURRENT_TIMESTAMP`,
-                [key, stringValue]
-            );
-        }
-        
-        res.json({ success: true, message: 'Settings saved successfully' });
-    } catch (error) {
-        console.error('Settings save error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
 // Logo upload endpoint
 app.post('/api/settings/logo', upload.single('logo'), async (req, res) => {
     try {

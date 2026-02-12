@@ -1221,3 +1221,28 @@ img[onerror] {
     min-height: 60px;
     background: #f3f4f6;
 }
+
+/* Developer */
+.developer {
+    text-align: center;
+    margin-top: 2rem; 
+    margin-bottom: 0rem;
+    font-size: 10px;
+}
+
+.developer p {
+   color: var(--text-light);
+}
+
+.developer a {
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.developer a:hover {
+   color: var(--primary-color);
+}
+
+.developer a:visited {
+   color: var(--text-dark);
+}

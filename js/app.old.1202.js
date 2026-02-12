@@ -30,7 +30,7 @@ const app = {
     chartPeriod: '24h',
 
     async init() {
-        await this.loadSettings();
+        this.loadSettings();
         this.checkAuth();
     },
 
@@ -639,42 +639,7 @@ const app = {
         this.closeChangePasswordModal();
     },
 
-    async loadSettings() {
-        try {
-            // Load from database first
-            const response = await fetch(`${API_BASE}/api/settings`);
-            const data = await response.json();
-            
-            if (data.success && data.settings) {
-                // Map database keys to camelCase
-                this.settings = {
-                    slideshowTiming: data.settings.slideshow_timing || 5,
-                    siteLogo: data.settings.site_logo || null,
-                    hospitalName: data.settings.hospital_name || 'RSU Islam Group',
-                    hospitalTagline: data.settings.hospital_tagline || 'Healthcare Excellence',
-                    roundedImageEdges: data.settings.rounded_image_edges !== false,
-                    coloredBlurBackground: data.settings.colored_blur_background !== false,
-                    titleFontSize: data.settings.title_font_size || 40,
-                    subtitleFontSize: data.settings.subtitle_font_size || 20,
-                    showPaginationDots: data.settings.show_pagination_dots !== false,
-                    showHospitalBadge: data.settings.show_hospital_badge !== false
-                };
-                
-                // Also save to localStorage as backup
-                localStorage.setItem('rsu_settings', JSON.stringify(this.settings));
-                this.applySettings();
-            } else {
-                // Fallback to localStorage if database fails
-                this.loadSettingsFromLocalStorage();
-            }
-        } catch (error) {
-            console.error('Failed to load settings from database:', error);
-            // Fallback to localStorage
-            this.loadSettingsFromLocalStorage();
-        }
-    },
-    
-    loadSettingsFromLocalStorage() {
+    loadSettings() {
         const storedSettings = localStorage.getItem('rsu_settings');
         if (storedSettings) {
             this.settings = JSON.parse(storedSettings);
@@ -682,42 +647,8 @@ const app = {
         }
     },
 
-    async saveSettings() {
-        try {
-            // Convert camelCase to snake_case for database
-            const dbSettings = {
-                slideshow_timing: this.settings.slideshowTiming,
-                site_logo: this.settings.siteLogo,
-                hospital_name: this.settings.hospitalName,
-                hospital_tagline: this.settings.hospitalTagline,
-                rounded_image_edges: this.settings.roundedImageEdges,
-                colored_blur_background: this.settings.coloredBlurBackground,
-                title_font_size: this.settings.titleFontSize,
-                subtitle_font_size: this.settings.subtitleFontSize,
-                show_pagination_dots: this.settings.showPaginationDots,
-                show_hospital_badge: this.settings.showHospitalBadge
-            };
-            
-            // Save to database
-            const response = await fetch(`${API_BASE}/api/settings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dbSettings)
-            });
-            
-            const data = await response.json();
-            
-            if (!data.success) {
-                console.error('Failed to save settings to database');
-            }
-            
-            // Also save to localStorage as backup
-            localStorage.setItem('rsu_settings', JSON.stringify(this.settings));
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            // Still save to localStorage as fallback
-            localStorage.setItem('rsu_settings', JSON.stringify(this.settings));
-        }
+    saveSettings() {
+        localStorage.setItem('rsu_settings', JSON.stringify(this.settings));
     },
 
     applySettings() {

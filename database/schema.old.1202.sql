@@ -51,29 +51,6 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Settings table for persistent configuration
-CREATE TABLE IF NOT EXISTS settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    setting_key VARCHAR(100) UNIQUE NOT NULL,
-    setting_value TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert default settings
-INSERT INTO settings (setting_key, setting_value) VALUES 
-    ('slideshow_timing', '5'),
-    ('hospital_name', 'RSU Islam Group'),
-    ('hospital_tagline', 'Ramah, Amanah, Profesional, Islami (RAPI)'),
-    ('site_logo', NULL),
-    ('rounded_image_edges', 'true'),
-    ('colored_blur_background', 'true'),
-    ('title_font_size', '40'),
-    ('subtitle_font_size', '20'),
-    ('show_pagination_dots', 'true'),
-    ('show_hospital_badge', 'true')
-ON CONFLICT(setting_key) DO NOTHING;
-
 -- Insert default admin user
 INSERT INTO users (username, full_name, password, role, status) 
 VALUES ('admin', 'Administrator', 'admin123', 'admin', 'active')

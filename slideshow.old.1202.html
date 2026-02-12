@@ -60,45 +60,13 @@
 
             async loadSettings() {
                 try {
-                    // Try to load from database first
-                    const response = await fetch('/api/settings');
-                    const data = await response.json();
-                    
-                    if (data.success && data.settings) {
-                        // Map database keys to camelCase
-                        this.settings = {
-                            slideshowTiming: data.settings.slideshow_timing || 5,
-                            siteLogo: data.settings.site_logo || null,
-                            hospitalName: data.settings.hospital_name || 'RSU Islam Group',
-                            hospitalTagline: data.settings.hospital_tagline || 'Ramah, Amanah, Profesional, Islami (RAPI)',
-                            roundedImageEdges: data.settings.rounded_image_edges !== false,
-                            coloredBlurBackground: data.settings.colored_blur_background !== false,
-                            titleFontSize: data.settings.title_font_size || 40,
-                            subtitleFontSize: data.settings.subtitle_font_size || 20,
-                            showPaginationDots: data.settings.show_pagination_dots !== false,
-                            showHospitalBadge: data.settings.show_hospital_badge !== false
-                        };
-                    } else {
-                        // Fallback to localStorage
-                        const storedSettings = localStorage.getItem('rsu_settings');
-                        if (storedSettings) {
-                            this.settings = JSON.parse(storedSettings);
-                        }
+                    const storedSettings = localStorage.getItem('rsu_settings');
+                    if (storedSettings) {
+                        this.settings = JSON.parse(storedSettings);
                     }
-                    
                     this.applySettings();
                 } catch (error) {
                     console.error('Settings load error:', error);
-                    // Fallback to localStorage on error
-                    try {
-                        const storedSettings = localStorage.getItem('rsu_settings');
-                        if (storedSettings) {
-                            this.settings = JSON.parse(storedSettings);
-                        }
-                        this.applySettings();
-                    } catch (e) {
-                        console.error('localStorage fallback error:', e);
-                    }
                 }
             },
 
