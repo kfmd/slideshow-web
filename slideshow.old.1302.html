@@ -51,88 +51,11 @@
                 await this.loadSettings();
                 await this.loadSlides();
                 this.startAutoPlay();
-                this.startChangeDetection(); // Start auto-refresh monitoring
                 
                 setInterval(async () => {
                     await this.loadSettings();
                     await this.loadSlides();
                 }, 300000);
-            },
-
-            startChangeDetection() {
-                // Store initial timestamp
-                this.lastKnownUpdate = null;
-                
-                // Check for changes every 5 seconds
-                setInterval(async () => {
-                    try {
-                        const response = await fetch('/api/changes');
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            const currentUpdate = data.lastUpdate;
-                            
-                            // Initialize on first check
-                            if (!this.lastKnownUpdate) {
-                                this.lastKnownUpdate = currentUpdate;
-                                return;
-                            }
-                            
-                            // Check if content has changed
-                            if (currentUpdate !== this.lastKnownUpdate) {
-                                console.log('Changes detected! Refreshing slideshow...');
-                                
-                                // Show refresh notification
-                                this.showRefreshNotification();
-                                
-                                // Wait 1 second then reload
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1000);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Change detection error:', error);
-                        // Silently fail - don't disrupt slideshow
-                    }
-                }, 5000); // Check every 5 seconds
-            },
-
-            showRefreshNotification() {
-                // Create notification element
-                const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(0, 0, 0, 0.9);
-                    color: white;
-                    padding: 2rem 3rem;
-                    border-radius: 15px;
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                    z-index: 10000;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-                    text-align: center;
-                    animation: fadeIn 0.3s ease-in-out;
-                `;
-                notification.innerHTML = `
-                    <div style="margin-bottom: 1rem;">🔄</div>
-                    <div>Content Updated</div>
-                    <div style="font-size: 1rem; font-weight: normal; margin-top: 0.5rem; opacity: 0.8;">Refreshing slideshow...</div>
-                `;
-                
-                // Add animation
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes fadeIn {
-                        from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-                        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                    }
-                `;
-                document.head.appendChild(style);
-                document.body.appendChild(notification);
             },
 
             async loadSettings() {

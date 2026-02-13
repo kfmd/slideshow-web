@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Settings table for application configuration (NEW)
+-- Settings table for persistent configuration
 CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -60,54 +60,24 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Change tracking table for auto-refresh functionality
-CREATE TABLE IF NOT EXISTS change_tracker (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    last_slideshow_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_settings_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- Insert default settings
+INSERT INTO settings (setting_key, setting_value) VALUES 
+    ('slideshow_timing', '5'),
+    ('hospital_name', 'RSU Islam Group'),
+    ('hospital_tagline', 'Ramah, Amanah, Profesional, Islami (RAPI)'),
+    ('site_logo', NULL),
+    ('rounded_image_edges', 'true'),
+    ('colored_blur_background', 'true'),
+    ('title_font_size', '40'),
+    ('subtitle_font_size', '20'),
+    ('show_pagination_dots', 'true'),
+    ('show_hospital_badge', 'true')
+ON CONFLICT(setting_key) DO NOTHING;
 
 -- Insert default admin user
 INSERT INTO users (username, full_name, password, role, status) 
 VALUES ('admin', 'Administrator', 'admin123', 'admin', 'active')
 ON CONFLICT(username) DO NOTHING;
-
--- Initialize change tracker
-INSERT INTO change_tracker (id, last_slideshow_update, last_settings_update, updated_at)
-VALUES (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT(id) DO NOTHING;
-
--- Insert default settings
-INSERT INTO settings (setting_key, setting_value) VALUES ('slideshow_timing', '5')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('hospital_name', 'RSU Islam Group')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('hospital_tagline', 'Ramah, Amanah, Profesional, Islami (RAPI)')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('site_logo', NULL)
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('rounded_image_edges', 'true')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('colored_blur_background', 'true')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('title_font_size', '40')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('subtitle_font_size', '20')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('show_pagination_dots', 'true')
-ON CONFLICT(setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES ('show_hospital_badge', 'true')
-ON CONFLICT(setting_key) DO NOTHING;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_slideshows_status ON slideshows(status);
@@ -115,4 +85,3 @@ CREATE INDEX IF NOT EXISTS idx_slideshows_created_by ON slideshows(created_by);
 CREATE INDEX IF NOT EXISTS idx_images_slideshow_id ON images(slideshow_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(setting_key);

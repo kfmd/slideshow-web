@@ -8,9 +8,6 @@ const { runQuery, getOne, getAll } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Store SSE clients for real-time updates
-let sseClients = [];
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -50,43 +47,6 @@ const upload = multer({
 });
 
 // ============ API ROUTES ============
-
-// Server-Sent Events endpoint for real-time updates
-app.get('/api/events', (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    
-    // Add client to list
-    const clientId = Date.now();
-    const newClient = {
-        id: clientId,
-        res
-    };
-    sseClients.push(newClient);
-    
-    console.log(`📺 SSE client connected (ID: ${clientId}). Total clients: ${sseClients.length}`);
-    
-    // Send initial connection message
-    res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
-    
-    // Remove client on disconnect
-    req.on('close', () => {
-        sseClients = sseClients.filter(client => client.id !== clientId);
-        console.log(`📺 SSE client disconnected (ID: ${clientId}). Total clients: ${sseClients.length}`);
-    });
-});
-
-// Broadcast function to notify all connected clients
-function broadcastUpdate(eventType, data = {}) {
-    const message = JSON.stringify({ type: eventType, data, timestamp: Date.now() });
-    console.log(`📡 Broadcasting to ${sseClients.length} clients: ${eventType}`);
-    
-    sseClients.forEach(client => {
-        client.res.write(`data: ${message}\n\n`);
-    });
-}
 
 // User Authentication
 app.post('/api/login', async (req, res) => {
@@ -258,14 +218,6 @@ app.post('/api/slideshows', upload.array('images'), async (req, res) => {
             }
         }
         
-        // Update change tracker
-        await runQuery(
-            `UPDATE change_tracker SET 
-             last_slideshow_update = CURRENT_TIMESTAMP,
-             updated_at = CURRENT_TIMESTAMP 
-             WHERE id = 1`
-        );
-        
         res.json({ success: true, slideshowId });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -334,14 +286,6 @@ app.put('/api/slideshows/:id', upload.array('images'), async (req, res) => {
             }
         }
         
-        // Update change tracker
-        await runQuery(
-            `UPDATE change_tracker SET 
-             last_slideshow_update = CURRENT_TIMESTAMP,
-             updated_at = CURRENT_TIMESTAMP 
-             WHERE id = 1`
-        );
-        
         res.json({ success: true });
     } catch (error) {
         console.error('Update slideshow error:', error);
@@ -363,14 +307,6 @@ app.delete('/api/slideshows/:id', async (req, res) => {
         // Delete from database (cascade will handle images table)
         await runQuery('DELETE FROM slideshows WHERE id = ?', [req.params.id]);
         
-        // Update change tracker
-        await runQuery(
-            `UPDATE change_tracker SET 
-             last_slideshow_update = CURRENT_TIMESTAMP,
-             updated_at = CURRENT_TIMESTAMP 
-             WHERE id = 1`
-        );
-        
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -386,61 +322,6 @@ app.post('/api/slideshows/:id/display', async (req, res) => {
         );
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Get all settings
-app.get('/api/settings', async (req, res) => {
-    try {
-        const settings = await getAll('SELECT setting_key, setting_value FROM settings');
-        
-        // Convert array to object for easier access
-        const settingsObject = {};
-        settings.forEach(s => {
-            let value = s.setting_value;
-            
-            // Parse boolean values
-            if (value === 'true') value = true;
-            else if (value === 'false') value = false;
-            // Parse numeric values
-            else if (!isNaN(value) && value !== '' && value !== null) {
-                value = Number(value);
-            }
-            
-            settingsObject[s.setting_key] = value;
-        });
-        
-        res.json({ success: true, settings: settingsObject });
-    } catch (error) {
-        console.error('Get settings error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Update settings
-app.post('/api/settings', async (req, res) => {
-    try {
-        const settings = req.body;
-        
-        for (const [key, value] of Object.entries(settings)) {
-            // Convert value to string for storage
-            const stringValue = value === null ? null : String(value);
-            
-            // Use UPSERT (INSERT OR REPLACE)
-            await runQuery(
-                `INSERT INTO settings (setting_key, setting_value, updated_at) 
-                 VALUES (?, ?, CURRENT_TIMESTAMP)
-                 ON CONFLICT(setting_key) DO UPDATE SET 
-                    setting_value = excluded.setting_value,
-                    updated_at = CURRENT_TIMESTAMP`,
-                [key, stringValue]
-            );
-        }
-        
-        res.json({ success: true, message: 'Settings saved successfully' });
-    } catch (error) {
-        console.error('Save settings error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -515,48 +396,9 @@ app.post('/api/settings', async (req, res) => {
             );
         }
         
-        // Update change tracker for settings
-        await runQuery(
-            `UPDATE change_tracker SET 
-             last_settings_update = CURRENT_TIMESTAMP,
-             updated_at = CURRENT_TIMESTAMP 
-             WHERE id = 1`
-        );
-        
         res.json({ success: true, message: 'Settings saved successfully' });
     } catch (error) {
         console.error('Settings save error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Get change status for auto-refresh (NEW)
-app.get('/api/changes', async (req, res) => {
-    try {
-        const tracker = await getOne('SELECT * FROM change_tracker WHERE id = 1');
-        
-        if (tracker) {
-            res.json({
-                success: true,
-                lastSlideshowUpdate: tracker.last_slideshow_update,
-                lastSettingsUpdate: tracker.last_settings_update,
-                lastUpdate: tracker.updated_at
-            });
-        } else {
-            // Initialize if not exists
-            await runQuery(
-                `INSERT INTO change_tracker (id, last_slideshow_update, last_settings_update, updated_at)
-                 VALUES (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-            );
-            
-            res.json({
-                success: true,
-                lastSlideshowUpdate: new Date().toISOString(),
-                lastSettingsUpdate: new Date().toISOString(),
-                lastUpdate: new Date().toISOString()
-            });
-        }
-    } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
