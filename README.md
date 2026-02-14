@@ -11,6 +11,10 @@ Developed by KFMD
 
 ## PREVIEW
 
+### 🆕 Slideshow Auto-refresh
+
+<video src="https://github.com/user-attachments/assets/1b416565-9577-46ed-ad5c-2ccaf78ed42d" controls></video>
+
 ### Slideshow
 
 <video src="https://github.com/user-attachments/assets/fc96e8a5-a88d-443b-8164-289b8cd8a5dd" controls></video>
@@ -21,7 +25,7 @@ Developed by KFMD
 
 ---
 
-**Version:** 2.4.0
+**Version:** 2.6.0
 **Date:** February 2026
 **Status:** ✅ Production Ready
 
@@ -33,9 +37,20 @@ Developed by KFMD
 
 ---
 
-## NEW FEATURES 2.4
+## 🆕 NEW FEATURES in v2.6
 
-### 🆕 Rounded corner, blurred background, pagination & badge toggle
+### Auto-refresh, Persistent logo, hospital name and slogan
+
+- Automatic Refresh - No manual TV visits
+- Real-Time - 5-second update detection
+- Persistent logo, hospital name, and slogan
+- All Changes - Slideshows + Settings
+- All Devices - TVs, tablets, monitors
+- Visual Feedback - Beautiful notification
+
+## NEW FEATURES in v2.4
+
+### Rounded corner, blurred background, pagination & badge toggle
 
 - Ability toggle rounded corner in settings
 - blurred background with colored/black and white toggle
@@ -104,7 +119,6 @@ rsu-slideshow-webapp/
 ├── slideshow.html          ← Display page
 ├── server.js               ← Express API server
 ├── package.json            ← Dependencies
-├── load-sample-data.js     ← If you want to load sample data to database using node 
 ├── Dockerfile              ← Docker image
 ├── docker-compose.yml      ← Hot reload config
 │
@@ -119,17 +133,13 @@ rsu-slideshow-webapp/
 │
 ├── database/
 │   ├── schema.sql          ← Database structure
-│   ├── sample-data.sql     ← Sample slideshows
 │   └── rsu_slideshow.db    ← SQLite database (auto-created)
 │
 └── assets/
     └── images/
         ├── placeholder.jpg      ← Fallback image
         └── uploads/             ← Uploaded files go here
-            ├── circ-1.jpg       ← Sample
-            ├── circ-2.jpg       ← Sample
-            ├── hc-1.jpg         ← Sample
-            └── hc-2.jpg         ← Sample
+            └──  files.jpg       ← Already uploaded files
 ```
 
 ---
@@ -385,11 +395,3 @@ docker-compose up -d --build
 **Change password in Users section!**
 
 ---
-<<<<<<< HEAD
-
-**Version:** 2.1
-**Date:** February 2026
-**Status:** ✅ Production Ready
-=======
->>>>>>>
->>>>>>> v2.4
